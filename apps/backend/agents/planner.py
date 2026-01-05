@@ -157,39 +157,46 @@ async def run_followup_planner(
         if plan_file.exists():
             plan = ImplementationPlan.load(plan_file)
 
+            # CRITICAL VALIDATION: Require at least 1 phase
+            if len(plan.phases) == 0:
+                if task_logger:
+                    task_logger.log_error(
+                        "VALIDATION FAILED: Plan has no phases. At least 1 phase is required.",
+                        phase=LogPhase.PLANNING,
+                    )
+                    # Read and log the raw plan file content for debugging
+                    try:
+                        import json
+
+                        with open(plan_file, "r") as f:
+                            plan_content = json.load(f)
+                        task_logger.log_with_detail(
+                            content="Empty phases array detected - Plan file content:",
+                            detail=json.dumps(plan_content, indent=2),
+                            entry_type=LogEntryType.ERROR,
+                            phase=LogPhase.PLANNING,
+                            collapsed=False,
+                        )
+                    except Exception as e:
+                        task_logger.log_error(
+                            f"Failed to read plan file for debugging: {e}",
+                            phase=LogPhase.PLANNING,
+                        )
+                print()
+                print_status(
+                    "Follow-up planning failed: Plan must have at least 1 phase",
+                    "error",
+                )
+                status_manager.update(state=BuildState.ERROR)
+                return False
+
             # CRITICAL LOGGING: Capture plan structure for debugging
             if task_logger:
                 task_logger.log_info(
                     f"Plan loaded successfully. Phases count: {len(plan.phases)}",
                     phase=LogPhase.PLANNING,
                 )
-
-            # Log detailed plan structure
-            if task_logger and len(plan.phases) == 0:
-                task_logger.log_error(
-                    "CRITICAL: Plan has EMPTY phases array after planner session!",
-                    phase=LogPhase.PLANNING,
-                )
-                # Read and log the raw plan file content for debugging
-                try:
-                    import json
-
-                    with open(plan_file, "r") as f:
-                        plan_content = json.load(f)
-                    task_logger.log_with_detail(
-                        content="Empty phases array detected - Plan file content:",
-                        detail=json.dumps(plan_content, indent=2),
-                        entry_type=LogEntryType.ERROR,
-                        phase=LogPhase.PLANNING,
-                        collapsed=False,
-                    )
-                except Exception as e:
-                    task_logger.log_error(
-                        f"Failed to read plan file for debugging: {e}",
-                        phase=LogPhase.PLANNING,
-                    )
-            elif task_logger:
-                # Log phase names when phases exist
+                # Log phase names
                 phase_names = [p.name for p in plan.phases]
                 task_logger.log_info(
                     f"Plan has {len(plan.phases)} phases: {', '.join(phase_names)}",
