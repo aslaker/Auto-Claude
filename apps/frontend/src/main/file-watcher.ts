@@ -17,6 +17,24 @@ export class FileWatcher extends EventEmitter {
   private watchers: Map<string, WatcherInfo> = new Map();
 
   /**
+   * Validate implementation plan content
+   * Returns true if plan is valid (has phases and no error)
+   */
+  private isValidPlan(plan: ImplementationPlan): boolean {
+    // Check if plan has error field populated
+    if (plan.error) {
+      return false;
+    }
+
+    // Check if plan has at least one phase
+    if (!plan.phases || plan.phases.length === 0) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * Start watching a task's implementation plan
    */
   async watch(taskId: string, specDir: string): Promise<void> {
@@ -51,9 +69,15 @@ export class FileWatcher extends EventEmitter {
     // Handle file changes
     watcher.on('change', () => {
       try {
+        // Read and parse implementation_plan.json content
         const content = readFileSync(planPath, 'utf-8');
         const plan: ImplementationPlan = JSON.parse(content);
-        this.emit('progress', taskId, plan);
+
+        // Validate plan content before emitting
+        if (this.isValidPlan(plan)) {
+          this.emit('progress', taskId, plan);
+        }
+        // Invalid plans will be handled in subtask-4-2 (emit error event)
       } catch {
         // File might be in the middle of being written
         // Ignore parse errors, next change event will have complete file
@@ -70,7 +94,12 @@ export class FileWatcher extends EventEmitter {
     try {
       const content = readFileSync(planPath, 'utf-8');
       const plan: ImplementationPlan = JSON.parse(content);
-      this.emit('progress', taskId, plan);
+
+      // Validate plan content before emitting
+      if (this.isValidPlan(plan)) {
+        this.emit('progress', taskId, plan);
+      }
+      // Invalid plans will be handled in subtask-4-2 (emit error event)
     } catch {
       // Initial read failed - not critical
     }
