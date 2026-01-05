@@ -319,6 +319,57 @@ class ImplementationPlan:
 
         return new_phase
 
+    def is_valid(self) -> bool:
+        """
+        Validate that the implementation plan is valid and ready for execution.
+
+        A valid plan must have:
+        - At least one phase
+        - At least one subtask across all phases
+        - No error field set
+
+        Returns:
+            bool: True if plan is valid, False otherwise
+        """
+        # Check for error field
+        if self.error:
+            return False
+
+        # Check for at least one phase
+        if not self.phases or len(self.phases) == 0:
+            return False
+
+        # Check for at least one subtask across all phases
+        all_subtasks = [s for p in self.phases for s in p.subtasks]
+        if not all_subtasks or len(all_subtasks) == 0:
+            return False
+
+        return True
+
+    def validate(self) -> tuple[bool, str | None]:
+        """
+        Validate the implementation plan and return detailed error if invalid.
+
+        Returns:
+            tuple[bool, str | None]: (is_valid, error_message)
+                - (True, None) if plan is valid
+                - (False, error_message) if plan is invalid
+        """
+        # Check for error field
+        if self.error:
+            return False, f"Plan has error: {self.error}"
+
+        # Check for at least one phase
+        if not self.phases or len(self.phases) == 0:
+            return False, "Plan has no phases defined"
+
+        # Check for at least one subtask across all phases
+        all_subtasks = [s for p in self.phases for s in p.subtasks]
+        if not all_subtasks or len(all_subtasks) == 0:
+            return False, "Plan has no subtasks defined"
+
+        return True, None
+
     def reset_for_followup(self) -> bool:
         """
         Reset plan status from completed/done back to in_progress for follow-up work.
