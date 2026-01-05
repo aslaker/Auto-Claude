@@ -718,6 +718,113 @@ export function registerTaskExecutionHandlers(
           }
         }
 
+        // CRITICAL FIX: Detect empty plan (bug from planning stage failure)
+        // If plan has empty phases or error field, restart planner instead of normal recovery
+        const hasEmptyPlan = plan && (
+          !plan.phases ||
+          (Array.isArray(plan.phases) && plan.phases.length === 0) ||
+          plan.error
+        );
+
+        if (hasEmptyPlan) {
+          console.warn('[Recovery] Detected empty/invalid plan - restarting planner');
+          console.warn('[Recovery] Plan error:', plan?.error || 'No error field, but phases array is empty');
+          console.warn('[Recovery] Phases count:', Array.isArray(plan?.phases) ? plan.phases.length : 'not an array');
+
+          // Check git status before restarting planner
+          const gitStatusForPlanner = checkGitStatus(project.path);
+          if (!gitStatusForPlanner.isGitRepo || !gitStatusForPlanner.hasCommits) {
+            console.warn('[Recovery] Git check failed, cannot restart planner');
+            return {
+              success: false,
+              error: `Cannot restart planner: ${gitStatusForPlanner.error || 'Git repository with commits required.'}`
+            };
+          }
+
+          // Check authentication before restarting planner
+          const profileManager = getClaudeProfileManager();
+          if (!profileManager.hasValidAuth()) {
+            console.warn('[Recovery] Auth check failed, cannot restart planner');
+            return {
+              success: false,
+              error: 'Cannot restart planner: Claude authentication required. Please go to Settings > Claude Profiles and authenticate your account.'
+            };
+          }
+
+          // Start file watcher for this task
+          const specsBaseDir = getSpecsDir(project.autoBuildPath);
+          const specDirForPlanner = path.join(project.path, specsBaseDir, task.specId);
+          fileWatcher.watch(taskId, specDirForPlanner);
+
+          // Check if spec.md exists (required for planner)
+          const specFilePath = path.join(specDirForPlanner, AUTO_BUILD_PATHS.SPEC_FILE);
+          const hasSpec = existsSync(specFilePath);
+
+          if (!hasSpec) {
+            console.warn('[Recovery] No spec.md found - cannot restart planner');
+            return {
+              success: false,
+              error: 'Cannot restart planner: spec.md not found. The task may need to be recreated.'
+            };
+          }
+
+          // Get base branch: task-level override takes precedence over project settings
+          const baseBranchForPlanner = task.metadata?.baseBranch || project.settings?.mainBranch;
+
+          // Restart planner by starting task execution (which will re-run planner since plan is invalid)
+          console.warn('[Recovery] Restarting planner for:', task.specId);
+          agentManager.startTaskExecution(
+            taskId,
+            project.path,
+            task.specId,
+            {
+              parallel: false,
+              workers: 1,
+              baseBranch: baseBranchForPlanner
+            }
+          );
+
+          // Update status to in_progress
+          if (plan) {
+            plan.status = 'in_progress';
+            plan.planStatus = 'in_progress';
+            plan.updated_at = new Date().toISOString();
+            plan.recoveryNote = `Planner restarted due to empty/invalid plan at ${new Date().toISOString()}`;
+
+            // Write to ALL plan file locations
+            const planContent = JSON.stringify(plan, null, 2);
+            for (const pathToUpdate of planPathsToUpdate) {
+              try {
+                atomicWriteFileSync(pathToUpdate, planContent);
+                console.log(`[Recovery] Wrote planner restart status to: ${pathToUpdate}`);
+              } catch (writeError) {
+                console.error(`[Recovery] Failed to write plan file at ${pathToUpdate}:`, writeError);
+              }
+            }
+          }
+
+          // Notify renderer of status change
+          const mainWindow = getMainWindow();
+          if (mainWindow) {
+            mainWindow.webContents.send(
+              IPC_CHANNELS.TASK_STATUS_CHANGE,
+              taskId,
+              'in_progress'
+            );
+          }
+
+          return {
+            success: true,
+            data: {
+              taskId,
+              recovered: true,
+              newStatus: 'in_progress',
+              message: 'Planner restarted due to empty/invalid plan',
+              autoRestarted: true
+            }
+          };
+        }
+
         // Determine the target status intelligently based on subtask progress
         // If targetStatus is explicitly provided, use it; otherwise calculate from subtasks
         let newStatus: TaskStatus = targetStatus || 'backlog';
