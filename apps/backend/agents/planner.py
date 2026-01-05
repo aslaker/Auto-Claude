@@ -12,6 +12,7 @@ from core.client import create_client
 from phase_config import get_phase_model, get_phase_thinking_budget
 from phase_event import ExecutionPhase, emit_phase
 from task_logger import (
+    LogEntryType,
     LogPhase,
     get_task_logger,
 )
@@ -108,11 +109,25 @@ async def run_followup_planner(
     print_status("Running follow-up planner...", "progress")
     print()
 
+    # Log planning session start
+    if task_logger:
+        task_logger.log_info(
+            "Starting follow-up planner agent session",
+            phase=LogPhase.PLANNING,
+        )
+
     try:
         # Run single planning session
         async with client:
             status, response = await run_agent_session(
                 client, prompt, spec_dir, verbose, phase=LogPhase.PLANNING
+            )
+
+        # Log session completion
+        if task_logger:
+            task_logger.log_info(
+                f"Follow-up planner session completed with status: {status}",
+                phase=LogPhase.PLANNING,
             )
 
         # End planning phase in task logger
@@ -131,12 +146,66 @@ async def run_followup_planner(
 
         # Verify the plan was updated (should have pending subtasks now)
         plan_file = spec_dir / "implementation_plan.json"
+
+        # Log plan file existence check
+        if task_logger:
+            task_logger.log_info(
+                f"Checking for plan file: {plan_file.exists()}",
+                phase=LogPhase.PLANNING,
+            )
+
         if plan_file.exists():
             plan = ImplementationPlan.load(plan_file)
+
+            # CRITICAL LOGGING: Capture plan structure for debugging
+            if task_logger:
+                task_logger.log_info(
+                    f"Plan loaded successfully. Phases count: {len(plan.phases)}",
+                    phase=LogPhase.PLANNING,
+                )
+
+            # Log detailed plan structure
+            if task_logger and len(plan.phases) == 0:
+                task_logger.log_error(
+                    "CRITICAL: Plan has EMPTY phases array after planner session!",
+                    phase=LogPhase.PLANNING,
+                )
+                # Read and log the raw plan file content for debugging
+                try:
+                    import json
+
+                    with open(plan_file, "r") as f:
+                        plan_content = json.load(f)
+                    task_logger.log_with_detail(
+                        content="Empty phases array detected - Plan file content:",
+                        detail=json.dumps(plan_content, indent=2),
+                        entry_type=LogEntryType.ERROR,
+                        phase=LogPhase.PLANNING,
+                        collapsed=False,
+                    )
+                except Exception as e:
+                    task_logger.log_error(
+                        f"Failed to read plan file for debugging: {e}",
+                        phase=LogPhase.PLANNING,
+                    )
+            elif task_logger:
+                # Log phase names when phases exist
+                phase_names = [p.name for p in plan.phases]
+                task_logger.log_info(
+                    f"Plan has {len(plan.phases)} phases: {', '.join(phase_names)}",
+                    phase=LogPhase.PLANNING,
+                )
 
             # Check if there are any pending subtasks
             all_subtasks = [c for p in plan.phases for c in p.subtasks]
             pending_subtasks = [c for c in all_subtasks if c.status.value == "pending"]
+
+            # Log subtask counts
+            if task_logger:
+                task_logger.log_info(
+                    f"Total subtasks: {len(all_subtasks)}, Pending: {len(pending_subtasks)}",
+                    phase=LogPhase.PLANNING,
+                )
 
             if pending_subtasks:
                 # Reset the plan status to in_progress (in case planner didn't)
@@ -158,6 +227,19 @@ async def run_followup_planner(
                 status_manager.update(state=BuildState.PAUSED)
                 return True
             else:
+                # Log the warning condition
+                if task_logger:
+                    if len(plan.phases) == 0:
+                        task_logger.log_error(
+                            "No pending subtasks found: Plan has NO phases after planner session",
+                            phase=LogPhase.PLANNING,
+                        )
+                    else:
+                        task_logger.log_error(
+                            f"No pending subtasks found: Plan has {len(plan.phases)} phases but all subtasks are non-pending",
+                            phase=LogPhase.PLANNING,
+                        )
+
                 print()
                 print_status(
                     "Warning: No pending subtasks found after planning", "warning"
@@ -167,6 +249,13 @@ async def run_followup_planner(
                 status_manager.update(state=BuildState.PAUSED)
                 return False
         else:
+            # Log plan file missing
+            if task_logger:
+                task_logger.log_error(
+                    f"implementation_plan.json not found at {plan_file}",
+                    phase=LogPhase.PLANNING,
+                )
+
             print()
             print_status(
                 "Error: implementation_plan.json not found after planning", "error"
@@ -178,6 +267,18 @@ async def run_followup_planner(
         print()
         print_status(f"Follow-up planning error: {e}", "error")
         if task_logger:
-            task_logger.log_error(f"Follow-up planning error: {e}", LogPhase.PLANNING)
+            import traceback
+
+            task_logger.log_error(
+                f"Follow-up planning exception: {e}", LogPhase.PLANNING
+            )
+            # Log full traceback for debugging
+            task_logger.log_with_detail(
+                content="Follow-up planning exception traceback:",
+                detail=traceback.format_exc(),
+                entry_type=LogEntryType.ERROR,
+                phase=LogPhase.PLANNING,
+                collapsed=False,
+            )
         status_manager.update(state=BuildState.ERROR)
         return False
