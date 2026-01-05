@@ -639,6 +639,9 @@ export function getTaskByGitHubIssue(issueNumber: number): Task | undefined {
 export function isIncompleteHumanReview(task: Task): boolean {
   if (task.status !== 'human_review') return false;
 
+  // Special case: If task has a plan error, it failed during planning (empty plan scenario)
+  if (task.planError) return true;
+
   // If no subtasks defined, task hasn't been planned yet (shouldn't be in human_review)
   if (!task.subtasks || task.subtasks.length === 0) return true;
 
