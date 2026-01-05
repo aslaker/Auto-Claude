@@ -108,6 +108,11 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       const index = findTaskIndex(state.tasks, taskId);
       if (index === -1) return state;
 
+      // Reject plans with empty phases array
+      if (!plan.phases || plan.phases.length === 0) {
+        return state;
+      }
+
       return {
         tasks: updateTaskAtIndex(state.tasks, index, (t) => {
           const subtasks: Subtask[] = plan.phases.flatMap((phase) =>
