@@ -76,8 +76,13 @@ export class FileWatcher extends EventEmitter {
         // Validate plan content before emitting
         if (this.isValidPlan(plan)) {
           this.emit('progress', taskId, plan);
+        } else {
+          // Emit error event for invalid plan
+          const errorMsg = plan.error
+            ? `Plan has error: ${plan.error}`
+            : 'Plan has no phases';
+          this.emit('error', taskId, errorMsg);
         }
-        // Invalid plans will be handled in subtask-4-2 (emit error event)
       } catch {
         // File might be in the middle of being written
         // Ignore parse errors, next change event will have complete file
@@ -98,8 +103,13 @@ export class FileWatcher extends EventEmitter {
       // Validate plan content before emitting
       if (this.isValidPlan(plan)) {
         this.emit('progress', taskId, plan);
+      } else {
+        // Emit error event for invalid plan
+        const errorMsg = plan.error
+          ? `Plan has error: ${plan.error}`
+          : 'Plan has no phases';
+        this.emit('error', taskId, errorMsg);
       }
-      // Invalid plans will be handled in subtask-4-2 (emit error event)
     } catch {
       // Initial read failed - not critical
     }
