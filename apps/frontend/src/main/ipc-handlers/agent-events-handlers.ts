@@ -189,6 +189,17 @@ export function registerAgenteventsHandlers(
   fileWatcher.on('progress', (taskId: string, plan: ImplementationPlan) => {
     const mainWindow = getMainWindow();
     if (mainWindow) {
+      // Validate plan content before forwarding to renderer
+      const hasError = !!plan.error;
+      const hasEmptyPhases = !plan.phases || plan.phases.length === 0;
+
+      if (hasError || hasEmptyPhases) {
+        // Send error notification when plan is invalid
+        const errorMessage = plan.error || 'Plan creation failed: No phases were generated';
+        mainWindow.webContents.send(IPC_CHANNELS.TASK_ERROR, taskId, errorMessage);
+      }
+
+      // Always forward plan to renderer for state update
       mainWindow.webContents.send(IPC_CHANNELS.TASK_PROGRESS, taskId, plan);
     }
   });

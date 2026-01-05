@@ -3,6 +3,7 @@ import { unstable_batchedUpdates } from 'react-dom';
 import { useTaskStore } from '../stores/task-store';
 import { useRoadmapStore } from '../stores/roadmap-store';
 import { useRateLimitStore } from '../stores/rate-limit-store';
+import { toast } from './use-toast';
 import type { ImplementationPlan, TaskStatus, RoadmapGenerationStatus, Roadmap, ExecutionProgress, RateLimitInfo, SDKRateLimitInfo } from '../../shared/types';
 
 /**
@@ -139,6 +140,13 @@ export function useIpcListeners(): void {
         // Errors are not batched - show immediately
         setError(`Task ${taskId}: ${error}`);
         appendLog(taskId, `[ERROR] ${error}`);
+
+        // Show toast notification for plan validation errors
+        toast({
+          variant: 'destructive',
+          title: 'Task Error',
+          description: error
+        });
       }
     );
 
