@@ -39,6 +39,7 @@ class ImplementationPlan:
     planStatus: str | None = None
     recoveryNote: str | None = None
     qa_signoff: dict | None = None
+    error: str | None = None
 
     def to_dict(self) -> dict:
         """Convert to dictionary representation."""
@@ -61,6 +62,8 @@ class ImplementationPlan:
             result["recoveryNote"] = self.recoveryNote
         if self.qa_signoff:
             result["qa_signoff"] = self.qa_signoff
+        if self.error:
+            result["error"] = self.error
         return result
 
     @classmethod
@@ -96,6 +99,7 @@ class ImplementationPlan:
             planStatus=data.get("planStatus"),
             recoveryNote=data.get("recoveryNote"),
             qa_signoff=data.get("qa_signoff"),
+            error=data.get("error"),
         )
 
     def save(self, path: Path):

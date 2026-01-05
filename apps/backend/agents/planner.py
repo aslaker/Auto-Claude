@@ -159,6 +159,8 @@ async def run_followup_planner(
 
             # CRITICAL VALIDATION: Require at least 1 phase
             if len(plan.phases) == 0:
+                error_msg = "Planning failed: Planner agent did not create any phases. At least 1 phase is required for implementation."
+
                 if task_logger:
                     task_logger.log_error(
                         "VALIDATION FAILED: Plan has no phases. At least 1 phase is required.",
@@ -182,6 +184,19 @@ async def run_followup_planner(
                             f"Failed to read plan file for debugging: {e}",
                             phase=LogPhase.PLANNING,
                         )
+
+                # Write error to plan file instead of leaving it with empty phases
+                plan.error = error_msg
+                plan.status = "backlog"
+                plan.planStatus = "pending"
+                plan.save(plan_file)
+
+                if task_logger:
+                    task_logger.log_info(
+                        "Wrote error to plan file for frontend to display",
+                        phase=LogPhase.PLANNING,
+                    )
+
                 print()
                 print_status(
                     "Follow-up planning failed: Plan must have at least 1 phase",
