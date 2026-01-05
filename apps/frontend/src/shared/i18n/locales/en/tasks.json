@@ -23,6 +23,7 @@
     "pending": "Pending",
     "stuck": "Stuck",
     "incomplete": "Incomplete",
+    "planError": "Plan Error",
     "recovering": "Recovering...",
     "needsRecovery": "Needs Recovery",
     "needsResume": "Needs Resume"

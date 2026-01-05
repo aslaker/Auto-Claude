@@ -57,6 +57,7 @@ function taskCardPropsAreEqual(prevProps: TaskCardProps, nextProps: TaskCardProp
     prevTask.description === nextTask.description &&
     prevTask.updatedAt === nextTask.updatedAt &&
     prevTask.reviewReason === nextTask.reviewReason &&
+    prevTask.planError === nextTask.planError &&
     prevTask.executionProgress?.phase === nextTask.executionProgress?.phase &&
     prevTask.executionProgress?.phaseProgress === nextTask.executionProgress?.phaseProgress &&
     prevTask.subtasks.length === nextTask.subtasks.length &&
@@ -98,6 +99,9 @@ export const TaskCard = memo(function TaskCard({ task, onClick }: TaskCardProps)
 
   // Check if task is in human_review but has no completed subtasks (crashed/incomplete)
   const isIncomplete = isIncompleteHumanReview(task);
+
+  // Check if task has a plan error (planner failed to create phases)
+  const hasPlanError = !!(task.planError || (task.subtasks.length === 0 && task.status === 'human_review'));
 
   // Memoize expensive computations to avoid running on every render
   // Truncate description for card display - full description shown in modal
@@ -285,8 +289,19 @@ export const TaskCard = memo(function TaskCard({ task, onClick }: TaskCardProps)
         )}
 
         {/* Metadata badges */}
-        {(task.metadata || isStuck || isIncomplete || hasActiveExecution || reviewReasonInfo) && (
+        {(task.metadata || isStuck || isIncomplete || hasActiveExecution || reviewReasonInfo || hasPlanError) && (
           <div className="mt-2.5 flex flex-wrap gap-1.5">
+            {/* Plan error indicator - critical priority */}
+            {hasPlanError && !isStuck && (
+              <Badge
+                variant="outline"
+                className="text-[10px] px-1.5 py-0.5 flex items-center gap-1 bg-destructive/10 text-destructive border-destructive/30 badge-priority-urgent"
+                title={task.planError || 'Plan creation failed'}
+              >
+                <AlertTriangle className="h-2.5 w-2.5" />
+                {t('labels.planError')}
+              </Badge>
+            )}
             {/* Stuck indicator - highest priority */}
             {isStuck && (
               <Badge

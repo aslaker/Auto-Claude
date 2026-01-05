@@ -23,6 +23,7 @@
     "pending": "En attente",
     "stuck": "Bloqué",
     "incomplete": "Incomplet",
+    "planError": "Erreur de plan",
     "recovering": "Récupération...",
     "needsRecovery": "Récupération requise",
     "needsResume": "Reprise requise"

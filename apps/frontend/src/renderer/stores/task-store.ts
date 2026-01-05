@@ -108,9 +108,30 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       const index = findTaskIndex(state.tasks, taskId);
       if (index === -1) return state;
 
-      // Reject plans with empty phases array
+      // Check for plan errors and store them
+      if (plan.error) {
+        return {
+          tasks: updateTaskAtIndex(state.tasks, index, (t) => ({
+            ...t,
+            planError: plan.error,
+            status: 'human_review',
+            reviewReason: 'errors',
+            updatedAt: new Date()
+          }))
+        };
+      }
+
+      // Reject plans with empty phases array and store error
       if (!plan.phases || plan.phases.length === 0) {
-        return state;
+        return {
+          tasks: updateTaskAtIndex(state.tasks, index, (t) => ({
+            ...t,
+            planError: 'Plan has no phases',
+            status: 'human_review',
+            reviewReason: 'errors',
+            updatedAt: new Date()
+          }))
+        };
       }
 
       return {
@@ -155,6 +176,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
             subtasks,
             status,
             reviewReason,
+            planError: undefined,  // Clear any previous plan errors when receiving valid plan
             updatedAt: new Date()
           };
         })

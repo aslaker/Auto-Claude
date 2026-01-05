@@ -252,6 +252,7 @@ export interface Task {
   stagedAt?: string;  // ISO timestamp when changes were staged
   location?: 'main' | 'worktree';  // Where task was loaded from (main project or worktree)
   specsPath?: string;  // Full path to specs directory for this task
+  planError?: string;  // Error message from planner if plan creation failed
   createdAt: Date;
   updatedAt: Date;
 }
@@ -272,6 +273,7 @@ export interface ImplementationPlan {
   planStatus?: string;
   recoveryNote?: string;
   description?: string;
+  error?: string;  // Error message when planner fails to create phases
 }
 
 export interface Phase {
