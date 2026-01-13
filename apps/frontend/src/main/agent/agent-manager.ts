@@ -12,7 +12,7 @@ import {
   RoadmapConfig,
   PersonaConfig
 } from './types';
-import type { IdeationConfig } from '../../shared/types';
+import type { IdeationConfig, PersonaEnrichmentInput, Persona } from '../../shared/types';
 
 /**
  * Main AgentManager - orchestrates agent process lifecycle
@@ -266,9 +266,11 @@ export class AgentManager extends EventEmitter {
     refresh: boolean = false,
     enableCompetitorAnalysis: boolean = false,
     refreshCompetitorAnalysis: boolean = false,
-    config?: RoadmapConfig
+    config?: RoadmapConfig,
+    enablePersonaGeneration: boolean = false,
+    refreshPersonas: boolean = false
   ): void {
-    this.queueManager.startRoadmapGeneration(projectId, projectPath, refresh, enableCompetitorAnalysis, refreshCompetitorAnalysis, config);
+    this.queueManager.startRoadmapGeneration(projectId, projectPath, refresh, enableCompetitorAnalysis, refreshCompetitorAnalysis, config, enablePersonaGeneration, refreshPersonas);
   }
 
   /**
@@ -342,6 +344,31 @@ export class AgentManager extends EventEmitter {
    */
   isPersonaRunning(projectId: string): boolean {
     return this.queueManager.isPersonaRunning(projectId);
+  }
+
+  /**
+   * Start persona enrichment for a new persona (AI-assisted creation)
+   */
+  startPersonaEnrichment(
+    projectId: string,
+    projectPath: string,
+    input: PersonaEnrichmentInput,
+    config?: PersonaConfig
+  ): void {
+    this.queueManager.startPersonaEnrichment(projectId, projectPath, input, config);
+  }
+
+  /**
+   * Start persona enrichment for an existing persona
+   */
+  startPersonaEnrichmentExisting(
+    projectId: string,
+    projectPath: string,
+    personaId: string,
+    persona: Persona,
+    config?: PersonaConfig
+  ): void {
+    this.queueManager.startPersonaEnrichmentExisting(projectId, projectPath, personaId, persona, config);
   }
 
   /**

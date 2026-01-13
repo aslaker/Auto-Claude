@@ -13,10 +13,44 @@ import type {
   CodeQualityIdea,
   IdeationStatus,
   IdeationType,
-  IdeationSession
+  IdeationSession,
+  PersonaRelevanceScore
 } from '../../../shared/types';
 import { debugLog } from '../../../shared/utils/debug-logger';
 import type { RawIdea } from './types';
+
+/**
+ * Raw persona relevance item that can be in snake_case or camelCase
+ */
+interface RawPersonaRelevanceItem {
+  persona_id?: string;
+  personaId?: string;
+  relevance_score?: number;
+  relevanceScore?: number;
+  addressed_goal_ids?: string[];
+  addressedGoalIds?: string[];
+  addressed_pain_point_ids?: string[];
+  addressedPainPointIds?: string[];
+  rationale?: string;
+}
+
+/**
+ * Transform persona_relevance from snake_case to camelCase
+ */
+function transformPersonaRelevance(idea: RawIdea): PersonaRelevanceScore[] | undefined {
+  const rawRelevance = idea.persona_relevance || idea.personaRelevance;
+  if (!rawRelevance || !Array.isArray(rawRelevance)) {
+    return undefined;
+  }
+
+  return rawRelevance.map((r: RawPersonaRelevanceItem) => ({
+    personaId: r.persona_id || r.personaId || '',
+    relevanceScore: r.relevance_score ?? r.relevanceScore ?? 0,
+    addressedGoalIds: r.addressed_goal_ids || r.addressedGoalIds,
+    addressedPainPointIds: r.addressed_pain_point_ids || r.addressedPainPointIds,
+    rationale: r.rationale
+  }));
+}
 
 const VALID_IDEATION_TYPES: ReadonlySet<IdeationType> = new Set([
   'code_improvements',
@@ -57,6 +91,8 @@ export function transformIdeaFromSnakeCase(idea: RawIdea): Idea {
   const status = (idea.status || 'draft') as IdeationStatus;
   const createdAt = idea.created_at ? new Date(idea.created_at) : new Date();
 
+  const personaRelevance = transformPersonaRelevance(idea);
+
   if (idea.type === 'code_improvements') {
     return {
       id: idea.id,
@@ -66,6 +102,7 @@ export function transformIdeaFromSnakeCase(idea: RawIdea): Idea {
       rationale: idea.rationale,
       status,
       createdAt,
+      personaRelevance,
       buildsUpon: idea.builds_upon || idea.buildsUpon || [],
       estimatedEffort: idea.estimated_effort || idea.estimatedEffort || 'small',
       affectedFiles: idea.affected_files || idea.affectedFiles || [],
@@ -81,6 +118,7 @@ export function transformIdeaFromSnakeCase(idea: RawIdea): Idea {
       rationale: idea.rationale,
       status,
       createdAt,
+      personaRelevance,
       category: idea.category || 'usability',
       affectedComponents: idea.affected_components || idea.affectedComponents || [],
       screenshots: idea.screenshots || [],
@@ -97,6 +135,7 @@ export function transformIdeaFromSnakeCase(idea: RawIdea): Idea {
       rationale: idea.rationale,
       status,
       createdAt,
+      personaRelevance,
       category: idea.category || 'readme',
       targetAudience: idea.target_audience || idea.targetAudience || 'developers',
       affectedAreas: idea.affected_areas || idea.affectedAreas || [],
@@ -114,6 +153,7 @@ export function transformIdeaFromSnakeCase(idea: RawIdea): Idea {
       rationale: idea.rationale,
       status,
       createdAt,
+      personaRelevance,
       category: idea.category || 'configuration',
       severity: idea.severity || 'medium',
       affectedFiles: idea.affected_files || idea.affectedFiles || [],
@@ -132,6 +172,7 @@ export function transformIdeaFromSnakeCase(idea: RawIdea): Idea {
       rationale: idea.rationale,
       status,
       createdAt,
+      personaRelevance,
       category: idea.category || 'runtime',
       impact: idea.impact || 'medium',
       affectedAreas: idea.affected_areas || idea.affectedAreas || [],
@@ -150,6 +191,7 @@ export function transformIdeaFromSnakeCase(idea: RawIdea): Idea {
       rationale: idea.rationale,
       status,
       createdAt,
+      personaRelevance,
       category: idea.category || 'code_smells',
       severity: idea.severity || 'minor',
       affectedFiles: idea.affected_files || idea.affectedFiles || [],
@@ -173,6 +215,7 @@ export function transformIdeaFromSnakeCase(idea: RawIdea): Idea {
     rationale: idea.rationale,
     status,
     createdAt,
+    personaRelevance,
     buildsUpon: [],
     estimatedEffort: 'small',
     affectedFiles: [],

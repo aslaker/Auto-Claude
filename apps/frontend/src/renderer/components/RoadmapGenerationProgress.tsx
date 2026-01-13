@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Users, Sparkles, CheckCircle2, AlertCircle, Square } from 'lucide-react';
+import { Search, Users, Sparkles, CheckCircle2, AlertCircle, Square, TrendingUp } from 'lucide-react';
 import { Button } from './ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { cn } from '../lib/utils';
 import type { RoadmapGenerationStatus } from '../../shared/types/roadmap';
+import type { GenerationOptions } from '../stores/roadmap-store';
 
 /**
  * Hook to detect user's reduced motion preference.
@@ -39,6 +40,7 @@ interface RoadmapGenerationProgressProps {
   generationStatus: RoadmapGenerationStatus;
   className?: string;
   onStop?: () => void | Promise<void>;
+  enabledOptions?: GenerationOptions;
 }
 
 // Type for generation phases (excluding idle)
@@ -69,6 +71,20 @@ const PHASE_CONFIG: Record<
     color: 'bg-info',
     bgColor: 'bg-info/20',
   },
+  competitors: {
+    label: 'Competitors',
+    description: 'Researching competitors and market gaps...',
+    icon: TrendingUp,
+    color: 'bg-orange-500',
+    bgColor: 'bg-orange-500/20',
+  },
+  personas: {
+    label: 'Personas',
+    description: 'Generating user personas...',
+    icon: Users,
+    color: 'bg-purple-500',
+    bgColor: 'bg-purple-500/20',
+  },
   generating: {
     label: 'Generating',
     description: 'Generating feature roadmap...',
@@ -92,12 +108,28 @@ const PHASE_CONFIG: Record<
   },
 };
 
-// Phases shown in the step indicator (excluding complete and error)
-const STEP_PHASES: { key: GenerationPhase; label: string }[] = [
-  { key: 'analyzing', label: 'Analyze' },
-  { key: 'discovering', label: 'Discover' },
-  { key: 'generating', label: 'Generate' },
-];
+// Generate dynamic step phases based on enabled options
+function getStepPhases(options?: GenerationOptions): { key: GenerationPhase; label: string }[] {
+  const phases: { key: GenerationPhase; label: string }[] = [
+    { key: 'analyzing', label: 'Analyze' },
+    { key: 'discovering', label: 'Discover' },
+  ];
+
+  if (options?.competitorAnalysis) {
+    phases.push({ key: 'competitors', label: 'Competitors' });
+  }
+
+  if (options?.personaGeneration) {
+    phases.push({ key: 'personas', label: 'Personas' });
+  }
+
+  phases.push({ key: 'generating', label: 'Generate' });
+
+  return phases;
+}
+
+// Default phases for when options aren't provided
+const DEFAULT_STEP_PHASES = getStepPhases();
 
 /**
  * Internal component for showing phase steps indicator
@@ -105,14 +137,21 @@ const STEP_PHASES: { key: GenerationPhase; label: string }[] = [
 function PhaseStepsIndicator({
   currentPhase,
   reducedMotion,
+  enabledOptions,
 }: {
   currentPhase: RoadmapGenerationStatus['phase'];
   reducedMotion: boolean;
+  enabledOptions?: GenerationOptions;
 }) {
+  const stepPhases = useMemo(() => getStepPhases(enabledOptions), [enabledOptions]);
+
   const getPhaseState = (
     phaseKey: GenerationPhase
   ): 'pending' | 'active' | 'complete' | 'error' => {
-    const phaseOrder: GenerationPhase[] = ['analyzing', 'discovering', 'generating', 'complete'];
+    // Build phase order dynamically based on enabled options
+    const phaseOrder: GenerationPhase[] = stepPhases.map(p => p.key);
+    phaseOrder.push('complete');
+
     const currentIndex = phaseOrder.indexOf(currentPhase as GenerationPhase);
     const phaseIndex = phaseOrder.indexOf(phaseKey);
 
@@ -135,8 +174,8 @@ function PhaseStepsIndicator({
   };
 
   return (
-    <div className="flex items-center justify-center gap-1 mt-4">
-      {STEP_PHASES.map((phase, index) => {
+    <div className="flex items-center justify-center gap-1 mt-4 flex-wrap">
+      {stepPhases.map((phase, index) => {
         const state = getPhaseState(phase.key);
         return (
           <div key={phase.key} className="flex items-center">
@@ -168,11 +207,11 @@ function PhaseStepsIndicator({
               )}
               {phase.label}
             </motion.div>
-            {index < STEP_PHASES.length - 1 && (
+            {index < stepPhases.length - 1 && (
               <div
                 className={cn(
                   'w-4 h-px mx-1',
-                  getPhaseState(STEP_PHASES[index + 1].key) !== 'pending'
+                  getPhaseState(stepPhases[index + 1].key) !== 'pending'
                     ? 'bg-success/50'
                     : 'bg-border'
                 )}
@@ -193,7 +232,8 @@ function PhaseStepsIndicator({
 export function RoadmapGenerationProgress({
   generationStatus,
   className,
-  onStop
+  onStop,
+  enabledOptions
 }: RoadmapGenerationProgressProps) {
   const { phase, progress, message, error } = generationStatus;
   const reducedMotion = useReducedMotion();
@@ -358,7 +398,7 @@ export function RoadmapGenerationProgress({
       )}
 
       {/* Phase steps indicator */}
-      <PhaseStepsIndicator currentPhase={phase} reducedMotion={reducedMotion} />
+      <PhaseStepsIndicator currentPhase={phase} reducedMotion={reducedMotion} enabledOptions={enabledOptions} />
 
       {/* Error display - shows whenever error is present, regardless of phase */}
       <AnimatePresence mode="wait">

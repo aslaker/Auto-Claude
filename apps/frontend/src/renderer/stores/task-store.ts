@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import type { Task, TaskStatus, SubtaskStatus, ImplementationPlan, Subtask, TaskMetadata, ExecutionProgress, ExecutionPhase, ReviewReason, TaskDraft } from '../../shared/types';
+import type { Task, TaskStatus, SubtaskStatus, ImplementationPlan, Subtask, TaskMetadata, ExecutionProgress, ExecutionPhase, ReviewReason, TaskDraft, Persona } from '../../shared/types';
 import { debugLog } from '../../shared/utils/debug-logger';
+import { PERSONA_TYPE_WEIGHTS } from '../../shared/constants';
 
 interface TaskState {
   tasks: Task[];
@@ -765,4 +766,99 @@ export function getTaskProgress(task: Task): { completed: number; total: number;
   const completed = task.subtasks?.filter(s => s.status === 'completed').length || 0;
   const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
   return { completed, total, percentage };
+}
+
+// ============================================
+// Persona-Based Task Prioritization
+// ============================================
+
+/**
+ * Sort options for task lists
+ */
+export type TaskSortOption = 'created' | 'priority' | 'persona_impact';
+
+/**
+ * Calculate persona impact score for a task
+ * Uses persona type weights: Primary (3x), Secondary (2x), Edge-case (1x)
+ *
+ * @param task - The task to calculate impact for
+ * @param personas - Array of all personas
+ * @returns Impact score (higher = more important to key personas)
+ */
+export function calculatePersonaImpactScore(
+  task: Task,
+  personas: Persona[]
+): number {
+  const targetPersonaIds = task.metadata?.targetPersonaIds;
+  if (!targetPersonaIds?.length) return 0;
+
+  return targetPersonaIds.reduce((score: number, personaId: string) => {
+    const persona = personas.find(p => p.id === personaId);
+    if (!persona) return score;
+    return score + (PERSONA_TYPE_WEIGHTS[persona.type] || 1);
+  }, 0);
+}
+
+/**
+ * Sort tasks by persona impact (descending)
+ * Tasks targeting primary personas rank highest, followed by secondary, then edge-case
+ *
+ * @param tasks - Array of tasks to sort
+ * @param personas - Array of all personas for weight lookup
+ * @returns Sorted array of tasks (highest persona impact first)
+ */
+export function sortTasksByPersonaImpact(
+  tasks: Task[],
+  personas: Persona[]
+): Task[] {
+  return [...tasks].sort((a, b) => {
+    const scoreA = calculatePersonaImpactScore(a, personas);
+    const scoreB = calculatePersonaImpactScore(b, personas);
+    // Higher score = higher priority
+    return scoreB - scoreA;
+  });
+}
+
+/**
+ * Sort tasks by the specified criteria
+ *
+ * @param tasks - Array of tasks to sort
+ * @param sortBy - Sort option ('created' | 'priority' | 'persona_impact')
+ * @param personas - Array of personas (only needed for persona_impact sort)
+ * @returns Sorted array of tasks
+ */
+export function sortTasks(
+  tasks: Task[],
+  sortBy: TaskSortOption,
+  personas: Persona[] = []
+): Task[] {
+  switch (sortBy) {
+    case 'created':
+      return [...tasks].sort((a, b) => {
+        const dateA = a.createdAt instanceof Date ? a.createdAt : new Date(a.createdAt);
+        const dateB = b.createdAt instanceof Date ? b.createdAt : new Date(b.createdAt);
+        // Newest first
+        return dateB.getTime() - dateA.getTime();
+      });
+
+    case 'priority':
+      // Priority order: must > should > could > wont
+      const priorityOrder: Record<string, number> = {
+        must: 4,
+        should: 3,
+        could: 2,
+        wont: 1
+      };
+      return [...tasks].sort((a, b) => {
+        const prioA = priorityOrder[a.metadata?.priority || 'could'] || 2;
+        const prioB = priorityOrder[b.metadata?.priority || 'could'] || 2;
+        return prioB - prioA;
+      });
+
+    case 'persona_impact':
+      return sortTasksByPersonaImpact(tasks, personas);
+
+    default:
+      return tasks;
+  }
 }

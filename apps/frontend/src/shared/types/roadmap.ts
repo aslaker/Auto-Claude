@@ -64,6 +64,20 @@ export interface CompetitorAnalysis {
 }
 
 // ============================================
+// Persona Impact Types
+// ============================================
+
+/**
+ * Represents how much a roadmap feature impacts a specific persona
+ */
+export interface PersonaImpactScore {
+  personaId: string;
+  impactScore: number; // 0-100
+  addressedGoalIds?: string[];
+  addressedPainPointIds?: string[];
+}
+
+// ============================================
 // Roadmap Types
 // ============================================
 
@@ -123,6 +137,9 @@ export interface RoadmapFeature {
   userStories: string[];
   linkedSpecId?: string;
   competitorInsightIds?: string[];
+  // Persona targeting fields
+  targetPersonaIds?: string[];        // Which personas this feature is designed for
+  personaImpact?: PersonaImpactScore[]; // Detailed impact analysis per persona
   // External integration fields
   source?: FeatureSource;
   externalId?: string;    // ID from external system (e.g., Canny post ID)
@@ -176,7 +193,7 @@ export interface RoadmapDiscovery {
 }
 
 export interface RoadmapGenerationStatus {
-  phase: 'idle' | 'analyzing' | 'discovering' | 'generating' | 'complete' | 'error';
+  phase: 'idle' | 'analyzing' | 'discovering' | 'competitors' | 'personas' | 'generating' | 'complete' | 'error';
   progress: number;
   message: string;
   error?: string;

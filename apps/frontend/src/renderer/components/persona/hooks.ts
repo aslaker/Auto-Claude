@@ -7,7 +7,7 @@ import {
   stopPersonas,
   savePersonas,
 } from '../../stores/persona-store';
-import type { Persona, PersonaGenerationStatus } from '../../../shared/types';
+import type { Persona, PersonaGenerationStatus, PersonaEnrichmentStatus } from '../../../shared/types';
 
 export function usePersonaData(projectId: string) {
   const personas = usePersonaStore((state) => state.personas);
@@ -196,4 +196,91 @@ export function usePersonaUpdate(projectId: string) {
   );
 
   return { updatePersona };
+}
+
+/**
+ * Hook for enriching personas with AI research.
+ * Handles both new AI-assisted persona creation and enriching existing personas.
+ */
+export function usePersonaEnrichment(projectId: string) {
+  const [isEnriching, setIsEnriching] = useState(false);
+  const [enrichmentStatus, setEnrichmentStatus] = useState<PersonaEnrichmentStatus | null>(null);
+  const [enrichingPersonaId, setEnrichingPersonaId] = useState<string | null>(null);
+
+  // Enrich an existing persona
+  const enrichExistingPersona = useCallback(
+    (personaId: string) => {
+      setIsEnriching(true);
+      setEnrichingPersonaId(personaId);
+      setEnrichmentStatus({
+        phase: 'researching',
+        progress: 0,
+        message: 'Starting enrichment...',
+      });
+
+      window.electronAPI.enrichExistingPersona?.(projectId, personaId);
+    },
+    [projectId]
+  );
+
+  // Set up event listeners for enrichment progress
+  useEffect(() => {
+    if (!projectId) return;
+
+    const handleProgress = (eventProjectId: string, status: PersonaEnrichmentStatus) => {
+      if (eventProjectId === projectId) {
+        setEnrichmentStatus(status);
+      }
+    };
+
+    const handleComplete = async (eventProjectId: string, persona: Persona) => {
+      if (eventProjectId === projectId) {
+        setEnrichmentStatus({
+          phase: 'complete',
+          progress: 100,
+          message: 'Enrichment complete!',
+        });
+        setIsEnriching(false);
+        setEnrichingPersonaId(null);
+
+        // Update the persona in store
+        const store = usePersonaStore.getState();
+        store.updatePersona(persona.id, persona);
+
+        // Reload personas to get updated data
+        await loadPersonas(projectId);
+      }
+    };
+
+    const handleError = (eventProjectId: string, error: string) => {
+      if (eventProjectId === projectId) {
+        setEnrichmentStatus({
+          phase: 'error',
+          progress: 0,
+          message: 'Enrichment failed',
+          error,
+        });
+        setIsEnriching(false);
+        setEnrichingPersonaId(null);
+      }
+    };
+
+    // Subscribe to enrichment events
+    const unsubProgress = window.electronAPI.onPersonaEnrichmentProgress?.(handleProgress);
+    const unsubComplete = window.electronAPI.onPersonaEnrichmentComplete?.(handleComplete);
+    const unsubError = window.electronAPI.onPersonaEnrichmentError?.(handleError);
+
+    return () => {
+      unsubProgress?.();
+      unsubComplete?.();
+      unsubError?.();
+    };
+  }, [projectId]);
+
+  return {
+    isEnriching,
+    enrichmentStatus,
+    enrichingPersonaId,
+    enrichExistingPersona,
+  };
 }

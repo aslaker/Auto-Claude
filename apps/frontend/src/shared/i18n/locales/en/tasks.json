@@ -120,7 +120,9 @@
   },
   "metadata": {
     "severity": "severity",
-    "pullRequest": "Pull Request"
+    "pullRequest": "Pull Request",
+    "persona": "1 persona",
+    "personas": "{{count}} personas"
   },
   "images": {
     "removeImageAriaLabel": "Remove image {{filename}}",
@@ -134,6 +136,22 @@
     "gitOptions": {
       "useWorktreeLabel": "Use isolated workspace (recommended)",
       "useWorktreeDescription": "Creates changes in a separate git worktree for safe review before merging. Disable to build directly in your project (faster but riskier)."
+    },
+    "personas": {
+      "title": "Target Personas",
+      "description": "Select which user personas this task is designed for",
+      "selected": "{{count}} persona(s) selected",
+      "emptyState": {
+        "title": "No Personas Available",
+        "description": "Generate user personas to enable persona-driven development",
+        "generateButton": "Generate Personas"
+      },
+      "alignment": {
+        "title": "Goal Alignment",
+        "description": "Specify which goals and pain points this task addresses",
+        "goals": "Goals addressed",
+        "painPoints": "Pain points solved"
+      }
     }
   },
   "subtasks": {

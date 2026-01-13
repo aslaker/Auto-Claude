@@ -5,7 +5,7 @@ import type { IdeationConfig } from '../../shared/types';
  * Agent-specific types for process and state management
  */
 
-export type QueueProcessType = 'ideation' | 'roadmap' | 'persona';
+export type QueueProcessType = 'ideation' | 'roadmap' | 'persona' | 'persona-enrichment';
 
 export interface AgentProcess {
   taskId: string;

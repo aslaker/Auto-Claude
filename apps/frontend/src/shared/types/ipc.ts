@@ -107,7 +107,9 @@ import type {
   PersonasConfig,
   PersonaGenerationStatus,
   PersonaDiscoveryResult,
-  Persona
+  Persona,
+  PersonaEnrichmentInput,
+  PersonaEnrichmentStatus
 } from './persona';
 import type {
   LinearTeam,
@@ -323,8 +325,8 @@ export interface ElectronAPI {
   getRoadmap: (projectId: string) => Promise<IPCResult<Roadmap | null>>;
   getRoadmapStatus: (projectId: string) => Promise<IPCResult<{ isRunning: boolean }>>;
   saveRoadmap: (projectId: string, roadmap: Roadmap) => Promise<IPCResult>;
-  generateRoadmap: (projectId: string, enableCompetitorAnalysis?: boolean, refreshCompetitorAnalysis?: boolean) => void;
-  refreshRoadmap: (projectId: string, enableCompetitorAnalysis?: boolean, refreshCompetitorAnalysis?: boolean) => void;
+  generateRoadmap: (projectId: string, enableCompetitorAnalysis?: boolean, refreshCompetitorAnalysis?: boolean, enablePersonaGeneration?: boolean, refreshPersonas?: boolean) => void;
+  refreshRoadmap: (projectId: string, enableCompetitorAnalysis?: boolean, refreshCompetitorAnalysis?: boolean, enablePersonaGeneration?: boolean, refreshPersonas?: boolean) => void;
   stopRoadmap: (projectId: string) => Promise<IPCResult>;
   updateFeatureStatus: (
     projectId: string,
@@ -370,6 +372,22 @@ export interface ElectronAPI {
   ) => () => void;
   onPersonaStopped: (
     callback: (projectId: string) => void
+  ) => () => void;
+
+  // Persona enrichment operations (AI-assisted creation)
+  enrichNewPersona: (projectId: string, input: PersonaEnrichmentInput) => void;
+  enrichExistingPersona: (projectId: string, personaId: string) => void;
+  addManualPersona: (projectId: string, persona: Persona) => Promise<IPCResult<Persona>>;
+
+  // Persona enrichment event listeners
+  onPersonaEnrichmentProgress: (
+    callback: (projectId: string, status: PersonaEnrichmentStatus) => void
+  ) => () => void;
+  onPersonaEnrichmentComplete: (
+    callback: (projectId: string, persona: Persona) => void
+  ) => () => void;
+  onPersonaEnrichmentError: (
+    callback: (projectId: string, error: string) => void
   ) => () => void;
 
   // Remove persona event listeners

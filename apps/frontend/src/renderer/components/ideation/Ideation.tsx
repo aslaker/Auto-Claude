@@ -41,7 +41,9 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
     summary,
     activeIdeas,
     selectedIds,
+    selectedPersonaId,
     setSelectedIdea,
+    setSelectedPersonaId,
     setActiveTab,
     setShowConfigDialog,
     setShowDismissed,
@@ -151,7 +153,12 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
 
       {/* Content */}
       <div className="flex-1 overflow-hidden">
-        <IdeationFilters activeTab={activeTab} onTabChange={setActiveTab}>
+        <IdeationFilters
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          selectedPersonaId={selectedPersonaId}
+          onPersonaChange={setSelectedPersonaId}
+        >
           {/* All Ideas View */}
           <TabsContent value="all" className="flex-1 overflow-auto p-4">
             <div className="grid gap-3">
@@ -180,6 +187,10 @@ export function Ideation({ projectId, onGoToTask }: IdeationProps) {
             const typeIdeas = getIdeasByType(type).filter((idea) => {
               if (!showDismissed && idea.status === 'dismissed') return false;
               if (!showArchived && idea.status === 'archived') return false;
+              // Apply persona filter
+              if (selectedPersonaId && !idea.personaRelevance?.some(pr => pr.personaId === selectedPersonaId)) {
+                return false;
+              }
               return true;
             });
             return (

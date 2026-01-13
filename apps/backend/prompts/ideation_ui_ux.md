@@ -32,6 +32,15 @@ Each idea MUST have this structure:
   "current_state": "Description of current state",
   "proposed_change": "Specific change to make",
   "user_benefit": "How users benefit from this change",
+  "persona_relevance": [
+    {
+      "persona_id": "persona-xxx",
+      "relevance_score": 0-100,
+      "addressed_goal_ids": ["goal-id-1"],
+      "addressed_pain_point_ids": ["pain-point-id-1"],
+      "rationale": "Why this idea benefits this persona"
+    }
+  ],
   "status": "draft",
   "created_at": "ISO timestamp"
 }
@@ -354,6 +363,15 @@ cat > ui_ux_ideas.json << 'EOF'
       "current_state": "[Current state description]",
       "proposed_change": "[Specific proposed change]",
       "user_benefit": "[How users benefit]",
+      "persona_relevance": [
+        {
+          "persona_id": "[persona.id from context]",
+          "relevance_score": 75,
+          "addressed_goal_ids": ["[goal.id if addressed]"],
+          "addressed_pain_point_ids": ["[pain_point.id if addressed]"],
+          "rationale": "[Why this idea benefits this persona]"
+        }
+      ],
       "status": "draft",
       "created_at": "[ISO timestamp]"
     }

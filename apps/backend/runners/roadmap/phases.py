@@ -205,13 +205,17 @@ class FeaturesPhase:
         output_dir: Path,
         refresh: bool,
         agent_executor: "AgentExecutor",
+        project_dir: Path,
     ):
         self.output_dir = output_dir
         self.refresh = refresh
         self.agent_executor = agent_executor
+        self.project_dir = project_dir
         self.roadmap_file = output_dir / "roadmap.json"
         self.discovery_file = output_dir / "roadmap_discovery.json"
         self.project_index_file = output_dir / "project_index.json"
+        # Personas file location (may or may not exist)
+        self.personas_file = project_dir / ".auto-claude" / "personas" / "personas.json"
 
     async def execute(self) -> RoadmapPhaseResult:
         """Generate and prioritize features for the roadmap."""
@@ -267,7 +271,7 @@ class FeaturesPhase:
 
     def _build_context(self) -> str:
         """Build context string for the features agent."""
-        return f"""
+        context = f"""
 **Discovery File**: {self.discovery_file}
 **Project Index**: {self.project_index_file}
 **Output File**: {self.roadmap_file}
@@ -278,9 +282,31 @@ Based on the discovery data:
 3. Organize into phases
 4. Create milestones
 5. Map dependencies
-
-Output the complete roadmap to roadmap.json.
 """
+        # Add persona context if personas exist
+        if self.personas_file.exists():
+            try:
+                with open(self.personas_file) as f:
+                    personas_data = json.load(f)
+                persona_count = len(personas_data.get("personas", []))
+                if persona_count > 0:
+                    context += f"""
+**IMPORTANT - User Personas Available**:
+**Personas File**: {self.personas_file}
+**Persona Count**: {persona_count}
+
+You MUST:
+1. Read the personas file to understand target users
+2. Link features to relevant personas using `target_persona_ids`
+3. Add `persona_impact` with impact scores for each linked persona
+4. Prioritize features that serve PRIMARY personas (3x weight)
+5. Reference personas in feature rationale
+"""
+            except (json.JSONDecodeError, OSError):
+                pass  # Graceful degradation if file is malformed or unreadable
+
+        context += "\nOutput the complete roadmap to roadmap.json."
+        return context
 
     def _validate_features(self, attempt: int) -> RoadmapPhaseResult | None:
         """Validate the roadmap features file.

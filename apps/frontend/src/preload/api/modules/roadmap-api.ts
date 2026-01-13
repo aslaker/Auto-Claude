@@ -16,8 +16,8 @@ export interface RoadmapAPI {
   getRoadmap: (projectId: string) => Promise<IPCResult<Roadmap | null>>;
   getRoadmapStatus: (projectId: string) => Promise<IPCResult<{ isRunning: boolean }>>;
   saveRoadmap: (projectId: string, roadmap: Roadmap) => Promise<IPCResult>;
-  generateRoadmap: (projectId: string, enableCompetitorAnalysis?: boolean, refreshCompetitorAnalysis?: boolean) => void;
-  refreshRoadmap: (projectId: string, enableCompetitorAnalysis?: boolean, refreshCompetitorAnalysis?: boolean) => void;
+  generateRoadmap: (projectId: string, enableCompetitorAnalysis?: boolean, refreshCompetitorAnalysis?: boolean, enablePersonaGeneration?: boolean, refreshPersonas?: boolean) => void;
+  refreshRoadmap: (projectId: string, enableCompetitorAnalysis?: boolean, refreshCompetitorAnalysis?: boolean, enablePersonaGeneration?: boolean, refreshPersonas?: boolean) => void;
   stopRoadmap: (projectId: string) => Promise<IPCResult>;
   updateFeatureStatus: (
     projectId: string,
@@ -58,11 +58,11 @@ export const createRoadmapAPI = (): RoadmapAPI => ({
   saveRoadmap: (projectId: string, roadmap: Roadmap): Promise<IPCResult> =>
     invokeIpc(IPC_CHANNELS.ROADMAP_SAVE, projectId, roadmap),
 
-  generateRoadmap: (projectId: string, enableCompetitorAnalysis?: boolean, refreshCompetitorAnalysis?: boolean): void =>
-    sendIpc(IPC_CHANNELS.ROADMAP_GENERATE, projectId, enableCompetitorAnalysis, refreshCompetitorAnalysis),
+  generateRoadmap: (projectId: string, enableCompetitorAnalysis?: boolean, refreshCompetitorAnalysis?: boolean, enablePersonaGeneration?: boolean, refreshPersonas?: boolean): void =>
+    sendIpc(IPC_CHANNELS.ROADMAP_GENERATE, projectId, enableCompetitorAnalysis, refreshCompetitorAnalysis, enablePersonaGeneration, refreshPersonas),
 
-  refreshRoadmap: (projectId: string, enableCompetitorAnalysis?: boolean, refreshCompetitorAnalysis?: boolean): void =>
-    sendIpc(IPC_CHANNELS.ROADMAP_REFRESH, projectId, enableCompetitorAnalysis, refreshCompetitorAnalysis),
+  refreshRoadmap: (projectId: string, enableCompetitorAnalysis?: boolean, refreshCompetitorAnalysis?: boolean, enablePersonaGeneration?: boolean, refreshPersonas?: boolean): void =>
+    sendIpc(IPC_CHANNELS.ROADMAP_REFRESH, projectId, enableCompetitorAnalysis, refreshCompetitorAnalysis, enablePersonaGeneration, refreshPersonas),
 
   stopRoadmap: (projectId: string): Promise<IPCResult> =>
     invokeIpc(IPC_CHANNELS.ROADMAP_STOP, projectId),

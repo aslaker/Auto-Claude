@@ -6,7 +6,7 @@ import { AgentState } from './agent-state';
 import { AgentEvents } from './agent-events';
 import { AgentProcessManager } from './agent-process';
 import { RoadmapConfig, PersonaConfig } from './types';
-import type { IdeationConfig, Idea, PersonasConfig } from '../../shared/types';
+import type { IdeationConfig, Idea, PersonasConfig, PersonaEnrichmentInput, Persona } from '../../shared/types';
 import { detectRateLimit, createSDKRateLimitInfo, getProfileEnv } from '../rate-limit-detector';
 import { getAPIProfileEnv } from '../services/profile';
 import { getOAuthModeClearVars } from './env-utils';
@@ -78,6 +78,8 @@ export class AgentQueueManager {
    * @param refreshCompetitorAnalysis - Force refresh competitor analysis even if it exists.
    *   This allows refreshing competitor data independently of the general roadmap refresh.
    *   Use when user explicitly wants new competitor research.
+   * @param enablePersonaGeneration - Generate user personas as part of roadmap generation
+   * @param refreshPersonas - Force regenerate personas even if they exist
    */
   async startRoadmapGeneration(
     projectId: string,
@@ -85,7 +87,9 @@ export class AgentQueueManager {
     refresh: boolean = false,
     enableCompetitorAnalysis: boolean = false,
     refreshCompetitorAnalysis: boolean = false,
-    config?: RoadmapConfig
+    config?: RoadmapConfig,
+    enablePersonaGeneration: boolean = false,
+    refreshPersonas: boolean = false
   ): Promise<void> {
     debugLog('[Agent Queue] Starting roadmap generation:', {
       projectId,
@@ -93,6 +97,8 @@ export class AgentQueueManager {
       refresh,
       enableCompetitorAnalysis,
       refreshCompetitorAnalysis,
+      enablePersonaGeneration,
+      refreshPersonas,
       config
     });
 
@@ -126,6 +132,15 @@ export class AgentQueueManager {
     // Add refresh competitor analysis flag if user wants fresh competitor data
     if (refreshCompetitorAnalysis) {
       args.push('--refresh-competitor-analysis');
+    }
+
+    // Add persona generation flags
+    if (enablePersonaGeneration) {
+      args.push('--persona-generation');
+    }
+
+    if (refreshPersonas) {
+      args.push('--refresh-personas');
     }
 
     // Add model and thinking level from config
@@ -1176,5 +1191,307 @@ export class AgentQueueManager {
   isPersonaRunning(projectId: string): boolean {
     const processInfo = this.state.getProcess(projectId);
     return processInfo?.queueProcessType === 'persona';
+  }
+
+  /**
+   * Start persona enrichment for a new persona (AI-assisted creation)
+   */
+  async startPersonaEnrichment(
+    projectId: string,
+    projectPath: string,
+    input: PersonaEnrichmentInput,
+    config?: PersonaConfig
+  ): Promise<void> {
+    debugLog('[Agent Queue] Starting persona enrichment (new):', {
+      projectId,
+      projectPath,
+      role: input.role,
+      type: input.type
+    });
+
+    const autoBuildSource = this.processManager.getAutoBuildSourcePath();
+
+    if (!autoBuildSource) {
+      debugError('[Agent Queue] Auto-build source path not found');
+      this.emitter.emit('persona-enrichment-error', projectId, 'Auto-build source path not found. Please configure it in App Settings.');
+      return;
+    }
+
+    const personaRunnerPath = path.join(autoBuildSource, 'runners', 'persona_runner.py');
+
+    if (!existsSync(personaRunnerPath)) {
+      debugError('[Agent Queue] Persona runner not found at:', personaRunnerPath);
+      this.emitter.emit('persona-enrichment-error', projectId, `Persona runner not found at: ${personaRunnerPath}`);
+      return;
+    }
+
+    const args = [
+      personaRunnerPath,
+      '--project', projectPath,
+      '--enrich-new',
+      '--role', input.role,
+      '--description', input.description,
+      '--persona-type', input.type
+    ];
+
+    // Add optional fields
+    if (input.primaryGoal) {
+      args.push('--primary-goal', input.primaryGoal);
+    }
+    if (input.experienceLevel) {
+      args.push('--experience-level', input.experienceLevel);
+    }
+    if (input.industry) {
+      args.push('--industry', input.industry);
+    }
+
+    // Add model and thinking level from config
+    if (config?.model) {
+      args.push('--model', config.model);
+    }
+    if (config?.thinkingLevel) {
+      args.push('--thinking-level', config.thinkingLevel);
+    }
+
+    debugLog('[Agent Queue] Spawning persona enrichment process with args:', args);
+
+    await this.spawnPersonaEnrichmentProcess(projectId, projectPath, args, 'new');
+  }
+
+  /**
+   * Start persona enrichment for an existing persona
+   */
+  async startPersonaEnrichmentExisting(
+    projectId: string,
+    projectPath: string,
+    personaId: string,
+    persona: Persona,
+    config?: PersonaConfig
+  ): Promise<void> {
+    debugLog('[Agent Queue] Starting persona enrichment (existing):', {
+      projectId,
+      projectPath,
+      personaId,
+      personaName: persona.name
+    });
+
+    const autoBuildSource = this.processManager.getAutoBuildSourcePath();
+
+    if (!autoBuildSource) {
+      debugError('[Agent Queue] Auto-build source path not found');
+      this.emitter.emit('persona-enrichment-error', projectId, 'Auto-build source path not found. Please configure it in App Settings.');
+      return;
+    }
+
+    const personaRunnerPath = path.join(autoBuildSource, 'runners', 'persona_runner.py');
+
+    if (!existsSync(personaRunnerPath)) {
+      debugError('[Agent Queue] Persona runner not found at:', personaRunnerPath);
+      this.emitter.emit('persona-enrichment-error', projectId, `Persona runner not found at: ${personaRunnerPath}`);
+      return;
+    }
+
+    const args = [
+      personaRunnerPath,
+      '--project', projectPath,
+      '--enrich-existing',
+      '--persona-id', personaId
+    ];
+
+    // Add model and thinking level from config
+    if (config?.model) {
+      args.push('--model', config.model);
+    }
+    if (config?.thinkingLevel) {
+      args.push('--thinking-level', config.thinkingLevel);
+    }
+
+    debugLog('[Agent Queue] Spawning persona enrichment process with args:', args);
+
+    await this.spawnPersonaEnrichmentProcess(projectId, projectPath, args, 'existing');
+  }
+
+  /**
+   * Spawn a Python process for persona enrichment
+   */
+  private async spawnPersonaEnrichmentProcess(
+    projectId: string,
+    projectPath: string,
+    args: string[],
+    enrichmentType: 'new' | 'existing'
+  ): Promise<void> {
+    debugLog('[Agent Queue] Spawning persona enrichment process:', { projectId, projectPath, enrichmentType });
+
+    const autoBuildSource = this.processManager.getAutoBuildSourcePath();
+    const cwd = autoBuildSource || process.cwd();
+
+    // Ensure Python environment is ready before spawning
+    if (!await this.ensurePythonEnvReady(projectId, 'persona-error')) {
+      this.emitter.emit('persona-enrichment-error', projectId, 'Python environment not ready');
+      return;
+    }
+
+    // Use a unique task ID for enrichment to not conflict with regular persona generation
+    const enrichmentTaskId = `${projectId}-enrichment`;
+
+    // Kill existing enrichment process for this project if any
+    const wasKilled = this.processManager.killProcess(enrichmentTaskId);
+    if (wasKilled) {
+      debugLog('[Agent Queue] Killed existing enrichment process for project:', projectId);
+    }
+
+    // Generate unique spawn ID for this process instance
+    const spawnId = this.state.generateSpawnId();
+    debugLog('[Agent Queue] Generated enrichment spawn ID:', spawnId);
+
+    // Get combined environment variables
+    const combinedEnv = this.processManager.getCombinedEnv(projectPath);
+
+    // Get active Claude profile environment
+    const profileEnv = getProfileEnv();
+
+    // Get active API profile environment variables
+    const apiProfileEnv = await getAPIProfileEnv();
+
+    // Get OAuth mode clearing vars
+    const oauthModeClearVars = getOAuthModeClearVars(apiProfileEnv);
+
+    // Get Python path from process manager
+    const pythonPath = this.processManager.getPythonPath();
+
+    // Get Python environment from pythonEnvManager
+    const pythonEnv = pythonEnvManager.getPythonEnv();
+
+    // Build PYTHONPATH
+    const pythonPathParts: string[] = [];
+    if (pythonEnv.PYTHONPATH) {
+      pythonPathParts.push(pythonEnv.PYTHONPATH);
+    }
+    if (autoBuildSource) {
+      pythonPathParts.push(autoBuildSource);
+    }
+    const combinedPythonPath = pythonPathParts.join(process.platform === 'win32' ? ';' : ':');
+
+    // Build final environment
+    const finalEnv = {
+      ...process.env,
+      ...pythonEnv,
+      ...combinedEnv,
+      ...oauthModeClearVars,
+      ...profileEnv,
+      ...apiProfileEnv,
+      PYTHONPATH: combinedPythonPath,
+      PYTHONUNBUFFERED: '1',
+      PYTHONUTF8: '1'
+    };
+
+    // Parse Python command
+    const [pythonCommand, pythonBaseArgs] = parsePythonCommand(pythonPath);
+    const childProcess = spawn(pythonCommand, [...pythonBaseArgs, ...args], {
+      cwd,
+      env: finalEnv
+    });
+
+    this.state.addProcess(enrichmentTaskId, {
+      taskId: enrichmentTaskId,
+      process: childProcess,
+      startedAt: new Date(),
+      projectPath,
+      spawnId,
+      queueProcessType: 'persona-enrichment'
+    });
+
+    // Track progress through output
+    let progressPhase = 'researching';
+    let progressPercent = 10;
+    let allEnrichmentOutput = '';
+
+    // Handle stdout
+    childProcess.stdout?.on('data', (data: Buffer) => {
+      const log = data.toString('utf8');
+      allEnrichmentOutput = (allEnrichmentOutput + log).slice(-10000);
+
+      // Parse enrichment-specific markers
+      const phaseMatch = log.match(/ENRICHMENT_PHASE:(\w+)/);
+      if (phaseMatch) {
+        progressPhase = phaseMatch[1];
+        progressPercent = progressPhase === 'researching' ? 30 : progressPhase === 'generating' ? 60 : progressPercent;
+      }
+
+      // Check for completion with persona data
+      const completeMatch = log.match(/ENRICHMENT_COMPLETE:(.+)/);
+      if (completeMatch) {
+        try {
+          const persona = JSON.parse(completeMatch[1]);
+          debugLog('[Agent Queue] Enrichment complete, persona:', { id: persona.id, name: persona.name });
+          this.emitter.emit('persona-enrichment-complete', projectId, persona);
+        } catch (parseErr) {
+          debugError('[Agent Queue] Failed to parse enriched persona:', parseErr);
+        }
+      }
+
+      // Check for error
+      const errorMatch = log.match(/ENRICHMENT_ERROR:(.+)/);
+      if (errorMatch) {
+        debugError('[Agent Queue] Enrichment error:', errorMatch[1]);
+        this.emitter.emit('persona-enrichment-error', projectId, errorMatch[1]);
+      }
+
+      this.emitter.emit('persona-enrichment-progress', projectId, {
+        phase: progressPhase,
+        progress: progressPercent,
+        message: log.trim().substring(0, 200)
+      });
+    });
+
+    // Handle stderr
+    childProcess.stderr?.on('data', (data: Buffer) => {
+      const log = data.toString('utf8');
+      allEnrichmentOutput = (allEnrichmentOutput + log).slice(-10000);
+      console.error('[Persona Enrichment STDERR]', log);
+      this.emitter.emit('persona-enrichment-progress', projectId, {
+        phase: progressPhase,
+        progress: progressPercent,
+        message: log.trim().substring(0, 200)
+      });
+    });
+
+    // Handle process exit
+    childProcess.on('exit', (code: number | null) => {
+      debugLog('[Agent Queue] Persona enrichment process exited:', { projectId, code, spawnId, enrichmentType });
+
+      const wasIntentionallyStopped = this.state.wasSpawnKilled(spawnId);
+      if (wasIntentionallyStopped) {
+        debugLog('[Agent Queue] Persona enrichment process was intentionally stopped, ignoring exit');
+        this.state.clearKilledSpawn(spawnId);
+        return;
+      }
+
+      this.state.deleteProcess(enrichmentTaskId);
+
+      // Check for rate limit if process failed
+      if (code !== 0) {
+        const rateLimitDetection = detectRateLimit(allEnrichmentOutput);
+        if (rateLimitDetection.isRateLimited) {
+          debugLog('[Agent Queue] Rate limit detected for persona enrichment');
+          const rateLimitInfo = createSDKRateLimitInfo('persona', rateLimitDetection, {
+            projectId
+          });
+          this.emitter.emit('sdk-rate-limit', rateLimitInfo);
+        }
+
+        // Only emit error if we haven't already (via ENRICHMENT_ERROR marker)
+        if (!allEnrichmentOutput.includes('ENRICHMENT_COMPLETE:') && !allEnrichmentOutput.includes('ENRICHMENT_ERROR:')) {
+          this.emitter.emit('persona-enrichment-error', projectId, `Persona enrichment failed with exit code ${code}`);
+        }
+      }
+    });
+
+    // Handle process error
+    childProcess.on('error', (err: Error) => {
+      console.error('[Persona Enrichment] Process error:', err.message);
+      this.state.deleteProcess(enrichmentTaskId);
+      this.emitter.emit('persona-enrichment-error', projectId, err.message);
+    });
   }
 }

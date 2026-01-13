@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
-import { ExternalLink, Play, X } from 'lucide-react';
+import { ExternalLink, Play, Users, X } from 'lucide-react';
+import { usePersonaStore, getPersonaById } from '../../stores/persona-store';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { Card } from '../ui/card';
@@ -46,11 +47,20 @@ interface IdeaCardProps {
 }
 
 export function IdeaCard({ idea, isSelected, onClick, onConvert, onGoToTask, onDismiss, onToggleSelect }: IdeaCardProps) {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation(['common', 'personas']);
+  const personas = usePersonaStore((state) => state.personas);
   const isDismissed = idea.status === 'dismissed';
   const isArchived = idea.status === 'archived';
   const isConverted = idea.status === 'converted';
   const isInactive = isDismissed || isArchived;
+
+  // Get persona names for tooltip
+  const getPersonaNames = (): string[] => {
+    if (!idea.personaRelevance?.length) return [];
+    return idea.personaRelevance
+      .map((pr) => getPersonaById(personas, pr.personaId)?.name)
+      .filter((name): name is string => !!name);
+  };
 
   return (
     <Card
@@ -117,6 +127,25 @@ export function IdeaCard({ idea, isSelected, onClick, onConvert, onGoToTask, onD
               <Badge variant="outline" className={CODE_QUALITY_SEVERITY_COLORS[(idea as CodeQualityIdea).severity]}>
                 {(idea as CodeQualityIdea).severity}
               </Badge>
+            )}
+            {/* Persona relevance badge */}
+            {idea.personaRelevance && idea.personaRelevance.length > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="text-purple-400 border-purple-500/30 bg-purple-500/10">
+                    <Users className="h-3 w-3 mr-1" />
+                    {idea.personaRelevance.length}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="text-sm">
+                    <div className="font-medium mb-1">{t('personas:relevance.targetedPersonas')}</div>
+                    <div className="text-muted-foreground">
+                      {getPersonaNames().join(', ') || t('personas:relevance.unknownPersonas')}
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
             )}
           </div>
           <h3 className={`font-medium ${isInactive ? 'line-through' : ''}`}>

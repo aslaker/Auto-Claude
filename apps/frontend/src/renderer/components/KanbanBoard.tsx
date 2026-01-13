@@ -19,10 +19,17 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable';
-import { Plus, Inbox, Loader2, Eye, CheckCircle2, Archive, RefreshCw, Trash2, FolderCheck } from 'lucide-react';
+import { Plus, Inbox, Loader2, Eye, CheckCircle2, Archive, RefreshCw, Trash2, FolderCheck, ArrowUpDown, Users } from 'lucide-react';
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './ui/select';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -35,7 +42,8 @@ import { TaskCard } from './TaskCard';
 import { SortableTaskCard } from './SortableTaskCard';
 import { TASK_STATUS_COLUMNS, TASK_STATUS_LABELS } from '../../shared/constants';
 import { cn } from '../lib/utils';
-import { persistTaskStatus, archiveTasks } from '../stores/task-store';
+import { persistTaskStatus, archiveTasks, sortTasks, type TaskSortOption } from '../stores/task-store';
+import { usePersonaStore } from '../stores/persona-store';
 import type { Task, TaskStatus } from '../../shared/types';
 
 // Type guard for valid drop column targets - preserves literal type from TASK_STATUS_COLUMNS
@@ -339,10 +347,12 @@ const DroppableColumn = memo(function DroppableColumn({ status, tasks, onTaskCli
 }, droppableColumnPropsAreEqual);
 
 export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isRefreshing }: KanbanBoardProps) {
-  const { t } = useTranslation('tasks');
+  const { t } = useTranslation(['tasks', 'personas']);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [overColumnId, setOverColumnId] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<TaskSortOption>('created');
   const { showArchived, toggleShowArchived } = useViewState();
+  const personas = usePersonaStore((state) => state.personas);
 
   // Worktree cleanup dialog state
   const [worktreeDialogOpen, setWorktreeDialogOpen] = useState(false);
@@ -392,17 +402,17 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
       }
     });
 
-    // Sort tasks within each column by createdAt (newest first)
+    // Sort tasks within each column using the selected sort option
     Object.keys(grouped).forEach((status) => {
-      grouped[status as typeof TASK_STATUS_COLUMNS[number]].sort((a, b) => {
-        const dateA = new Date(a.createdAt).getTime();
-        const dateB = new Date(b.createdAt).getTime();
-        return dateB - dateA; // Descending order (newest first)
-      });
+      grouped[status as typeof TASK_STATUS_COLUMNS[number]] = sortTasks(
+        grouped[status as typeof TASK_STATUS_COLUMNS[number]],
+        sortBy,
+        personas
+      );
     });
 
     return grouped;
-  }, [filteredTasks]);
+  }, [filteredTasks, sortBy, personas]);
 
   const handleArchiveAll = async () => {
     // Get projectId from the first task (all tasks should have the same projectId)
@@ -530,9 +540,33 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
 
   return (
     <div className="flex h-full flex-col">
-      {/* Kanban header with refresh button */}
-      {onRefresh && (
-        <div className="flex items-center justify-end px-6 pt-4 pb-2">
+      {/* Kanban header with sort and refresh */}
+      <div className="flex items-center justify-between px-6 pt-4 pb-2">
+        {/* Sort dropdown */}
+        <div className="flex items-center gap-2">
+          <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+          <Select
+            value={sortBy}
+            onValueChange={(value) => setSortBy(value as TaskSortOption)}
+          >
+            <SelectTrigger className="w-[180px] h-8">
+              <SelectValue placeholder={t('tasks:sorting.sortBy')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created">{t('personas:sorting.dateCreated')}</SelectItem>
+              <SelectItem value="priority">{t('personas:sorting.priority')}</SelectItem>
+              <SelectItem value="persona_impact">
+                <div className="flex items-center gap-2">
+                  <Users className="h-3 w-3 text-purple-400" />
+                  {t('personas:sorting.personaImpact')}
+                </div>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Refresh button */}
+        {onRefresh && (
           <Button
             variant="ghost"
             size="sm"
@@ -543,8 +577,8 @@ export function KanbanBoard({ tasks, onTaskClick, onNewTaskClick, onRefresh, isR
             <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
             {isRefreshing ? 'Refreshing...' : 'Refresh Tasks'}
           </Button>
-        </div>
-      )}
+        )}
+      </div>
       {/* Kanban columns */}
       <DndContext
         sensors={sensors}

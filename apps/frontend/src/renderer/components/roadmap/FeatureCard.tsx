@@ -1,4 +1,5 @@
-import { ExternalLink, Play, TrendingUp } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { ExternalLink, Play, TrendingUp, Users } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
@@ -9,6 +10,7 @@ import {
   ROADMAP_COMPLEXITY_COLORS,
   ROADMAP_IMPACT_COLORS,
 } from '../../../shared/constants';
+import { usePersonaStore, getPersonaById } from '../../stores/persona-store';
 import type { FeatureCardProps } from './types';
 
 export function FeatureCard({
@@ -18,6 +20,19 @@ export function FeatureCard({
   onGoToTask,
   hasCompetitorInsight = false,
 }: FeatureCardProps) {
+  const { t } = useTranslation('personas');
+  const personas = usePersonaStore((state) => state.personas);
+
+  // Get persona names for tooltip
+  const getPersonaNames = (): string[] => {
+    if (!feature.targetPersonaIds?.length) return [];
+    return feature.targetPersonaIds
+      .map((id) => getPersonaById(personas, id)?.name)
+      .filter((name): name is string => !!name);
+  };
+
+  const hasPersonaTargeting = feature.targetPersonaIds && feature.targetPersonaIds.length > 0;
+
   return (
     <Card className="p-4 hover:bg-muted/50 cursor-pointer transition-colors" onClick={onClick}>
       <div className="flex items-start justify-between">
@@ -47,6 +62,25 @@ export function FeatureCard({
                   </Badge>
                 </TooltipTrigger>
                 <TooltipContent>This feature addresses competitor pain points</TooltipContent>
+              </Tooltip>
+            )}
+            {/* Persona targeting badge */}
+            {hasPersonaTargeting && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge variant="outline" className="text-xs text-purple-400 border-purple-500/30 bg-purple-500/10">
+                    <Users className="h-3 w-3 mr-1" />
+                    {feature.targetPersonaIds!.length}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <div className="text-sm">
+                    <div className="font-medium mb-1">{t('impact.targetedPersonas')}</div>
+                    <div className="text-muted-foreground">
+                      {getPersonaNames().join(', ') || t('relevance.unknownPersonas')}
+                    </div>
+                  </div>
+                </TooltipContent>
               </Tooltip>
             )}
           </div>

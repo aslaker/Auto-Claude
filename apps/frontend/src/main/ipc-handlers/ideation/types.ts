@@ -72,6 +72,22 @@ export interface RawIdea extends Record<string, unknown> {
 
   // Linked task
   linked_task_id?: string;
+
+  // Persona relevance (snake_case from Python)
+  persona_relevance?: {
+    persona_id: string;
+    relevance_score: number;
+    addressed_goal_ids?: string[];
+    addressed_pain_point_ids?: string[];
+    rationale?: string;
+  }[];
+  personaRelevance?: {
+    personaId: string;
+    relevanceScore: number;
+    addressedGoalIds?: string[];
+    addressedPainPointIds?: string[];
+    rationale?: string;
+  }[];
 }
 
 export interface RawIdeationData {

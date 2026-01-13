@@ -26,6 +26,8 @@ export interface PersonaDetailPanelProps {
   onClose: () => void;
   onEdit?: () => void;
   onDelete?: (personaId: string) => void;
+  onEnrich?: (personaId: string) => void;
+  isEnriching?: boolean;
 }
 
 export interface PersonaGridProps {
@@ -50,4 +52,6 @@ export interface ResearchOptionDialogProps {
 export interface AddPersonaDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  projectId: string;
+  onPersonaAdded?: (personaId: string) => void;
 }

@@ -1,0 +1,81 @@
+{
+  "filter": {
+    "showingCount": "Showing {{filtered}} of {{total}} features",
+    "noFeaturesForPersona": "No features target this persona",
+    "clearFilter": "Clear filter"
+  },
+  "featureDetail": {
+    "targetPersonas": "Target Personas",
+    "noPersonas": "No personas targeted",
+    "impactScore": "Impact: {{score}}%"
+  },
+  "optionsDialog": {
+    "title": "Generate Roadmap",
+    "description": "Configure your roadmap generation options",
+    "baseRoadmap": {
+      "title": "Roadmap Generation",
+      "description": "Analyze your codebase and generate a feature roadmap based on project structure and best practices",
+      "time": "~2-3 min"
+    },
+    "enhancements": "Optional Enhancements",
+    "competitorAnalysis": {
+      "title": "Competitor Analysis",
+      "description": "Research competitor products to identify market gaps and differentiation opportunities",
+      "time": "+3-5 min",
+      "existing": "Existing analysis from {{date}}",
+      "useExisting": "Use existing analysis",
+      "refresh": "Run fresh analysis"
+    },
+    "personas": {
+      "title": "User Personas",
+      "description": "Generate detailed user personas to guide persona-driven development",
+      "time": "+2-4 min",
+      "existing": "{{count}} existing persona(s)",
+      "keepExisting": "Keep existing personas",
+      "regenerate": "Regenerate personas"
+    },
+    "totalTime": "Estimated total: {{time}}",
+    "laterNote": "You can add these features later from their respective tabs",
+    "generate": "Generate Roadmap",
+    "cancel": "Cancel"
+  },
+  "progress": {
+    "phases": {
+      "analyzing": {
+        "label": "Analyzing",
+        "description": "Analyzing project structure and codebase..."
+      },
+      "discovering": {
+        "label": "Discovering",
+        "description": "Discovering target audience and user needs..."
+      },
+      "competitors": {
+        "label": "Competitors",
+        "description": "Researching competitors and market gaps..."
+      },
+      "personas": {
+        "label": "Personas",
+        "description": "Generating user personas..."
+      },
+      "generating": {
+        "label": "Generating",
+        "description": "Generating feature roadmap..."
+      },
+      "complete": {
+        "label": "Complete",
+        "description": "Roadmap generation complete!"
+      },
+      "error": {
+        "label": "Error",
+        "description": "Generation failed"
+      }
+    },
+    "steps": {
+      "analyze": "Analyze",
+      "discover": "Discover",
+      "competitors": "Competitors",
+      "personas": "Personas",
+      "generate": "Generate"
+    }
+  }
+}

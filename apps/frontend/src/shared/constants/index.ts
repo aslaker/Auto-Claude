@@ -18,6 +18,9 @@ export * from './roadmap';
 // Ideation constants
 export * from './ideation';
 
+// Persona constants
+export * from './personas';
+
 // Changelog constants
 export * from './changelog';
 

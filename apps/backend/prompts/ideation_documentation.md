@@ -103,7 +103,16 @@ Write your findings to `{output_dir}/documentation_gaps_ideas.json`:
       "currentDocumentation": "Only basic type exports are documented",
       "proposedContent": "Add JSDoc for all public functions including parameters, return values, errors thrown, and usage examples",
       "priority": "high",
-      "estimatedEffort": "medium"
+      "estimatedEffort": "medium",
+      "persona_relevance": [
+        {
+          "persona_id": "persona-xxx",
+          "relevance_score": 85,
+          "addressed_goal_ids": ["goal-id-1"],
+          "addressed_pain_point_ids": ["pain-point-id-1"],
+          "rationale": "Why this documentation improvement benefits this persona"
+        }
+      ]
     }
   ],
   "metadata": {

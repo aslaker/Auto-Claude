@@ -157,7 +157,16 @@ Write your findings to `{output_dir}/code_quality_ideas.json`:
       },
       "estimatedEffort": "medium",
       "breakingChange": false,
-      "prerequisites": ["Ensure test coverage before refactoring"]
+      "prerequisites": ["Ensure test coverage before refactoring"],
+      "persona_relevance": [
+        {
+          "persona_id": "persona-xxx",
+          "relevance_score": 70,
+          "addressed_goal_ids": ["goal-id-1"],
+          "addressed_pain_point_ids": ["pain-point-id-1"],
+          "rationale": "Why this code quality improvement benefits this persona"
+        }
+      ]
     },
     {
       "id": "cq-002",

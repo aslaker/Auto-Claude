@@ -121,28 +121,42 @@ class ProjectAnalyzer:
         context["planned_features"] = list(set(context["planned_features"]))
 
         # Get personas context (if generated)
+        # Include full goals and pain points with IDs for persona relevance scoring
         personas_path = self.project_dir / ".auto-claude" / "personas" / "personas.json"
         if personas_path.exists():
             try:
                 with open(personas_path) as f:
                     personas_data = json.load(f)
                     for persona in personas_data.get("personas", []):
-                        # Extract key persona information for ideation context
+                        # Extract structured persona information for ideation context
+                        # Include IDs for relevance scoring
                         persona_summary = {
+                            "id": persona.get("id", ""),
                             "name": persona.get("name", ""),
-                            "type": persona.get("type", ""),
+                            "type": persona.get("type", ""),  # primary, secondary, edge-case
                             "tagline": persona.get("tagline", ""),
                             "role": persona.get("demographics", {}).get("role", ""),
+                            "experience_level": persona.get("demographics", {}).get(
+                                "experienceLevel", ""
+                            ),
+                            # Full goals with IDs and priorities for relevance scoring
                             "goals": [
-                                g.get("description", "")
+                                {
+                                    "id": g.get("id", ""),
+                                    "description": g.get("description", ""),
+                                    "priority": g.get("priority", ""),  # must-have, should-have, nice-to-have
+                                }
                                 for g in persona.get("goals", [])
-                                if g.get("priority") == "must-have"
-                            ][:3],  # Top 3 must-have goals
+                            ],
+                            # Full pain points with IDs and severities for relevance scoring
                             "pain_points": [
-                                p.get("description", "")
+                                {
+                                    "id": p.get("id", ""),
+                                    "description": p.get("description", ""),
+                                    "severity": p.get("severity", ""),  # high, medium, low
+                                }
                                 for p in persona.get("painPoints", [])
-                                if p.get("severity") == "high"
-                            ][:3],  # Top 3 high-severity pain points
+                            ],
                             "feature_preferences": persona.get("featurePreferences", {}),
                         }
                         context["personas"].append(persona_summary)

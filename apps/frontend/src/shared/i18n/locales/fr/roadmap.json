@@ -1,0 +1,81 @@
+{
+  "filter": {
+    "showingCount": "Affichage de {{filtered}} sur {{total}} fonctionnalites",
+    "noFeaturesForPersona": "Aucune fonctionnalite ne cible ce persona",
+    "clearFilter": "Effacer le filtre"
+  },
+  "featureDetail": {
+    "targetPersonas": "Personas Cibles",
+    "noPersonas": "Aucun persona cibl\u00e9",
+    "impactScore": "Impact: {{score}}%"
+  },
+  "optionsDialog": {
+    "title": "G\u00e9n\u00e9rer la Roadmap",
+    "description": "Configurez les options de g\u00e9n\u00e9ration de votre roadmap",
+    "baseRoadmap": {
+      "title": "G\u00e9n\u00e9ration de Roadmap",
+      "description": "Analysez votre code et g\u00e9n\u00e9rez une roadmap de fonctionnalit\u00e9s bas\u00e9e sur la structure du projet",
+      "time": "~2-3 min"
+    },
+    "enhancements": "Am\u00e9liorations Optionnelles",
+    "competitorAnalysis": {
+      "title": "Analyse Concurrentielle",
+      "description": "Recherchez les produits concurrents pour identifier les opportunit\u00e9s de diff\u00e9renciation",
+      "time": "+3-5 min",
+      "existing": "Analyse existante du {{date}}",
+      "useExisting": "Utiliser l'analyse existante",
+      "refresh": "Lancer une nouvelle analyse"
+    },
+    "personas": {
+      "title": "Personas Utilisateurs",
+      "description": "G\u00e9n\u00e9rez des personas d\u00e9taill\u00e9s pour guider le d\u00e9veloppement",
+      "time": "+2-4 min",
+      "existing": "{{count}} persona(s) existant(s)",
+      "keepExisting": "Garder les personas existants",
+      "regenerate": "Reg\u00e9n\u00e9rer les personas"
+    },
+    "totalTime": "Temps estim\u00e9: {{time}}",
+    "laterNote": "Vous pouvez ajouter ces fonctionnalit\u00e9s plus tard depuis leurs onglets respectifs",
+    "generate": "G\u00e9n\u00e9rer la Roadmap",
+    "cancel": "Annuler"
+  },
+  "progress": {
+    "phases": {
+      "analyzing": {
+        "label": "Analyse",
+        "description": "Analyse de la structure du projet..."
+      },
+      "discovering": {
+        "label": "D\u00e9couverte",
+        "description": "D\u00e9couverte du public cible et des besoins..."
+      },
+      "competitors": {
+        "label": "Concurrents",
+        "description": "Recherche des concurrents et des opportunit\u00e9s..."
+      },
+      "personas": {
+        "label": "Personas",
+        "description": "G\u00e9n\u00e9ration des personas utilisateurs..."
+      },
+      "generating": {
+        "label": "G\u00e9n\u00e9ration",
+        "description": "G\u00e9n\u00e9ration de la roadmap..."
+      },
+      "complete": {
+        "label": "Termin\u00e9",
+        "description": "G\u00e9n\u00e9ration de la roadmap termin\u00e9e!"
+      },
+      "error": {
+        "label": "Erreur",
+        "description": "\u00c9chec de la g\u00e9n\u00e9ration"
+      }
+    },
+    "steps": {
+      "analyze": "Analyser",
+      "discover": "D\u00e9couvrir",
+      "competitors": "Concurrents",
+      "personas": "Personas",
+      "generate": "G\u00e9n\u00e9rer"
+    }
+  }
+}

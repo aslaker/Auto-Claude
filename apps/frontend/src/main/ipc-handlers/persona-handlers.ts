@@ -1,7 +1,7 @@
 import { ipcMain, app } from 'electron';
 import type { BrowserWindow } from 'electron';
 import { IPC_CHANNELS, AUTO_BUILD_PATHS, DEFAULT_APP_SETTINGS, DEFAULT_FEATURE_MODELS, DEFAULT_FEATURE_THINKING } from '../../shared/constants';
-import type { IPCResult, Persona, PersonasConfig, PersonaGenerationStatus, AppSettings } from '../../shared/types';
+import type { IPCResult, Persona, PersonasConfig, PersonaGenerationStatus, PersonaEnrichmentInput, PersonaEnrichmentStatus, AppSettings } from '../../shared/types';
 import type { PersonaConfig } from '../agent/types';
 import path from 'path';
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'fs';
@@ -503,6 +503,202 @@ export function registerPersonaHandlers(
   );
 
   // ============================================
+  // Persona Enrichment Operations (AI-assisted creation)
+  // ============================================
+
+  ipcMain.on(
+    IPC_CHANNELS.PERSONA_ENRICH_NEW,
+    (_, projectId: string, input: PersonaEnrichmentInput) => {
+      debugLog('[Persona Handler] Enrich new persona request:', {
+        projectId,
+        role: input.role,
+        type: input.type
+      });
+
+      const mainWindow = getMainWindow();
+      if (!mainWindow) return;
+
+      const project = projectStore.getProject(projectId);
+      if (!project) {
+        debugError('[Persona Handler] Project not found:', projectId);
+        mainWindow.webContents.send(
+          IPC_CHANNELS.PERSONA_ENRICHMENT_ERROR,
+          projectId,
+          'Project not found'
+        );
+        return;
+      }
+
+      // Send initial progress
+      mainWindow.webContents.send(
+        IPC_CHANNELS.PERSONA_ENRICHMENT_PROGRESS,
+        projectId,
+        {
+          phase: 'researching',
+          progress: 10,
+          message: 'Starting AI-assisted persona creation...'
+        } as PersonaEnrichmentStatus
+      );
+
+      // Start enrichment via agent manager
+      agentManager.startPersonaEnrichment(
+        projectId,
+        project.path,
+        input
+      );
+    }
+  );
+
+  ipcMain.on(
+    IPC_CHANNELS.PERSONA_ENRICH_EXISTING,
+    (_, projectId: string, personaId: string) => {
+      debugLog('[Persona Handler] Enrich existing persona request:', {
+        projectId,
+        personaId
+      });
+
+      const mainWindow = getMainWindow();
+      if (!mainWindow) return;
+
+      const project = projectStore.getProject(projectId);
+      if (!project) {
+        debugError('[Persona Handler] Project not found:', projectId);
+        mainWindow.webContents.send(
+          IPC_CHANNELS.PERSONA_ENRICHMENT_ERROR,
+          projectId,
+          'Project not found'
+        );
+        return;
+      }
+
+      // Load the existing persona from file
+      const personasPath = path.join(
+        project.path,
+        AUTO_BUILD_PATHS.PERSONAS_DIR,
+        AUTO_BUILD_PATHS.PERSONAS_FILE
+      );
+
+      if (!existsSync(personasPath)) {
+        mainWindow.webContents.send(
+          IPC_CHANNELS.PERSONA_ENRICHMENT_ERROR,
+          projectId,
+          'Personas file not found'
+        );
+        return;
+      }
+
+      try {
+        const content = readFileSync(personasPath, 'utf-8');
+        const data = JSON.parse(content);
+        const persona = data.personas?.find((p: { id: string }) => p.id === personaId);
+
+        if (!persona) {
+          mainWindow.webContents.send(
+            IPC_CHANNELS.PERSONA_ENRICHMENT_ERROR,
+            projectId,
+            'Persona not found'
+          );
+          return;
+        }
+
+        // Send initial progress
+        mainWindow.webContents.send(
+          IPC_CHANNELS.PERSONA_ENRICHMENT_PROGRESS,
+          projectId,
+          {
+            phase: 'researching',
+            progress: 10,
+            message: 'Starting AI enrichment for existing persona...'
+          } as PersonaEnrichmentStatus
+        );
+
+        // Start enrichment via agent manager
+        agentManager.startPersonaEnrichmentExisting(
+          projectId,
+          project.path,
+          personaId,
+          transformPersonaFromFile(persona)
+        );
+      } catch (error) {
+        debugError('[Persona Handler] Failed to read persona:', error);
+        mainWindow.webContents.send(
+          IPC_CHANNELS.PERSONA_ENRICHMENT_ERROR,
+          projectId,
+          error instanceof Error ? error.message : 'Failed to read persona'
+        );
+      }
+    }
+  );
+
+  ipcMain.handle(
+    IPC_CHANNELS.PERSONA_ADD_MANUAL,
+    async (
+      _,
+      projectId: string,
+      persona: Persona
+    ): Promise<IPCResult<Persona>> => {
+      const project = projectStore.getProject(projectId);
+      if (!project) {
+        return { success: false, error: 'Project not found' };
+      }
+
+      const personasDir = path.join(project.path, AUTO_BUILD_PATHS.PERSONAS_DIR);
+      const personasPath = path.join(personasDir, AUTO_BUILD_PATHS.PERSONAS_FILE);
+
+      // Ensure directory exists
+      if (!existsSync(personasDir)) {
+        mkdirSync(personasDir, { recursive: true });
+      }
+
+      try {
+        let data: Record<string, unknown> = {
+          version: '1.0',
+          projectId,
+          personas: [],
+          metadata: {
+            generatedAt: new Date().toISOString(),
+            discoverySynced: false,
+            researchEnriched: false,
+            roadmapSynced: false,
+            personaCount: 0
+          }
+        };
+
+        if (existsSync(personasPath)) {
+          const content = readFileSync(personasPath, 'utf-8');
+          data = JSON.parse(content);
+        }
+
+        // Generate ID if not provided
+        const newPersona: Persona = {
+          ...persona,
+          id: persona.id || `persona-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        // Add the new persona
+        const personas = data.personas as Persona[] || [];
+        personas.push(newPersona);
+        data.personas = personas;
+
+        data.metadata = data.metadata || {};
+        (data.metadata as Record<string, unknown>).personaCount = personas.length;
+        (data.metadata as Record<string, unknown>).updatedAt = new Date().toISOString();
+
+        writeFileSync(personasPath, JSON.stringify(data, null, 2));
+
+        return { success: true, data: newPersona };
+      } catch (error) {
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Failed to add manual persona'
+        };
+      }
+    }
+  );
+
+  // ============================================
   // Persona Agent Events → Renderer
   // ============================================
 
@@ -524,6 +720,28 @@ export function registerPersonaHandlers(
     const mainWindow = getMainWindow();
     if (mainWindow) {
       mainWindow.webContents.send(IPC_CHANNELS.PERSONA_ERROR, projectId, error);
+    }
+  });
+
+  // Persona enrichment events
+  agentManager.on('persona-enrichment-progress', (projectId: string, status: PersonaEnrichmentStatus) => {
+    const mainWindow = getMainWindow();
+    if (mainWindow) {
+      mainWindow.webContents.send(IPC_CHANNELS.PERSONA_ENRICHMENT_PROGRESS, projectId, status);
+    }
+  });
+
+  agentManager.on('persona-enrichment-complete', (projectId: string, persona: Persona) => {
+    const mainWindow = getMainWindow();
+    if (mainWindow) {
+      mainWindow.webContents.send(IPC_CHANNELS.PERSONA_ENRICHMENT_COMPLETE, projectId, persona);
+    }
+  });
+
+  agentManager.on('persona-enrichment-error', (projectId: string, error: string) => {
+    const mainWindow = getMainWindow();
+    if (mainWindow) {
+      mainWindow.webContents.send(IPC_CHANNELS.PERSONA_ENRICHMENT_ERROR, projectId, error);
     }
   });
 }

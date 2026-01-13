@@ -126,7 +126,16 @@ Write your findings to `{output_dir}/performance_optimizations_ideas.json`:
       "expectedImprovement": "~270KB reduction in bundle size, ~20% faster initial load",
       "implementation": "1. Install date-fns\n2. Replace moment imports with date-fns equivalents\n3. Update format strings to date-fns syntax\n4. Remove moment.js dependency",
       "tradeoffs": "date-fns format strings differ from moment.js, requiring updates",
-      "estimatedEffort": "small"
+      "estimatedEffort": "small",
+      "persona_relevance": [
+        {
+          "persona_id": "persona-xxx",
+          "relevance_score": 80,
+          "addressed_goal_ids": ["goal-id-1"],
+          "addressed_pain_point_ids": ["pain-point-id-1"],
+          "rationale": "Why this performance improvement benefits this persona"
+        }
+      ]
     }
   ],
   "metadata": {

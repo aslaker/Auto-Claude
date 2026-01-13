@@ -12,7 +12,7 @@ You are the **Code Improvements Ideation Agent** in the Auto-Build framework. Yo
 
 **Input Files**:
 - `project_index.json` - Project structure and tech stack
-- `ideation_context.json` - Existing features, roadmap items, kanban tasks
+- `ideation_context.json` - Existing features, roadmap items, kanban tasks, and user personas
 - `memory/codebase_map.json` (if exists) - Previously discovered file purposes
 - `memory/patterns.md` (if exists) - Established code patterns
 
@@ -31,6 +31,15 @@ Each idea MUST have this structure:
   "affected_files": ["file1.ts", "file2.ts"],
   "existing_patterns": ["Pattern to follow"],
   "implementation_approach": "How to implement based on existing code",
+  "persona_relevance": [
+    {
+      "persona_id": "persona-xxx",
+      "relevance_score": 0-100,
+      "addressed_goal_ids": ["goal-id-1"],
+      "addressed_pain_point_ids": ["pain-point-id-1"],
+      "rationale": "Why this idea benefits this persona"
+    }
+  ],
   "status": "draft",
   "created_at": "ISO timestamp"
 }
@@ -78,6 +87,22 @@ Understand:
 - What patterns are established?
 - What is already planned (to avoid duplicates)?
 - What historical insights are available?
+- Who are the target personas? (from ideation_context.json)
+
+### Persona Context
+
+If `ideation_context.json` contains a `personas` array, each persona has:
+- `id` - Unique identifier for the persona
+- `name` - Display name (e.g., "Alex the API Developer")
+- `type` - primary, secondary, or edge-case
+- `goals` - Array of goals with `id`, `description`, and `priority` (must-have, should-have, nice-to-have)
+- `pain_points` - Array of pain points with `id`, `description`, and `severity` (high, medium, low)
+- `feature_preferences` - What features they want (must_have, nice_to_have, avoid)
+
+Use personas to:
+1. Consider which personas would benefit from each idea
+2. Identify ideas that address specific persona goals or pain points
+3. Prioritize ideas that serve primary personas over edge cases
 
 ### Graph Hints Integration
 
@@ -218,6 +243,14 @@ WHY THIS IS CODE-REVEALED
 
 EFFORT LEVEL: [trivial|small|medium|large|complex]
 Justification: [why this effort level]
+
+PERSONA RELEVANCE ANALYSIS
+For each persona in ideation_context.json:
+- [persona.name] ([persona.type]):
+  - Does this idea help achieve any of their goals? Which ones (by id)?
+  - Does this idea address any of their pain points? Which ones (by id)?
+  - Relevance score (0-100): [score]
+  - Rationale: [why this score]
 </ultrathink>
 ```
 
@@ -270,6 +303,15 @@ cat > code_improvements_ideas.json << 'EOF'
       "affected_files": ["[file1.ts]", "[file2.ts]"],
       "existing_patterns": ["[Pattern to follow]"],
       "implementation_approach": "[How to implement using existing code]",
+      "persona_relevance": [
+        {
+          "persona_id": "[persona.id from context]",
+          "relevance_score": 75,
+          "addressed_goal_ids": ["[goal.id if addressed]"],
+          "addressed_pain_point_ids": ["[pain_point.id if addressed]"],
+          "rationale": "[Why this idea benefits this persona]"
+        }
+      ],
       "status": "draft",
       "created_at": "[ISO timestamp]"
     }
@@ -296,6 +338,9 @@ After creating ideas:
 5. Does each idea have existing_patterns?
 6. Is estimated_effort justified by the analysis?
 7. Does implementation_approach reference existing code?
+8. Does each idea have persona_relevance array? (can be empty if no personas in context)
+9. Does each persona_relevance entry have valid persona_id matching context?
+10. Are relevance_scores reasonable (0-100)?
 
 ---
 

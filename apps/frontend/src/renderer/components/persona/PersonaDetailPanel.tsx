@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { X, Trash2, Edit, Target, AlertTriangle, Quote, Play, Briefcase, Building, TrendingUp, ChevronDown, ChevronRight } from 'lucide-react';
+import { X, Trash2, Edit, Target, AlertTriangle, Quote, Play, Briefcase, Building, TrendingUp, ChevronDown, ChevronRight, Sparkles, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { ScrollArea } from '../ui/scroll-area';
 import { Separator } from '../ui/separator';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../ui/collapsible';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '../../lib/utils';
 import type { PersonaDetailPanelProps } from './types';
 
@@ -21,9 +22,19 @@ const SEVERITY_STYLES = {
   low: 'bg-muted text-muted-foreground border-muted',
 };
 
-export function PersonaDetailPanel({ persona, onClose, onEdit, onDelete }: PersonaDetailPanelProps) {
+export function PersonaDetailPanel({
+  persona,
+  onClose,
+  onEdit,
+  onDelete,
+  onEnrich,
+  isEnriching
+}: PersonaDetailPanelProps) {
   const { t } = useTranslation(['personas', 'common']);
   const [openScenarios, setOpenScenarios] = useState<Record<string, boolean>>({});
+
+  // Check if persona can be enriched (manually created, not yet enriched)
+  const canEnrich = !persona.discoverySource.researchEnriched && onEnrich;
 
   return (
     <div className="fixed right-0 top-0 h-full w-[450px] bg-card border-l shadow-lg z-50 flex flex-col">
@@ -37,11 +48,75 @@ export function PersonaDetailPanel({ persona, onClose, onEdit, onDelete }: Perso
             {persona.avatar.initials}
           </div>
           <div>
-            <h2 className="font-semibold">{persona.name}</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="font-semibold">{persona.name}</h2>
+              {persona.discoverySource.researchEnriched ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] bg-purple-500/10 text-purple-500 border-purple-500/30"
+                      >
+                        <Sparkles className="h-2.5 w-2.5 mr-0.5" />
+                        {t('personas:enrichment.enriched.badge')}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('personas:enrichment.enriched.tooltip')}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : canEnrich ? (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] bg-muted text-muted-foreground"
+                      >
+                        {t('personas:enrichment.notEnriched.badge')}
+                      </Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{t('personas:enrichment.notEnriched.tooltip')}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              ) : null}
+            </div>
             <p className="text-sm text-muted-foreground">{persona.tagline}</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
+          {canEnrich && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => onEnrich(persona.id)}
+                    disabled={isEnriching}
+                    className="text-purple-500 hover:text-purple-600"
+                  >
+                    {isEnriching ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>
+                    {isEnriching
+                      ? t('personas:enrichment.enrichExisting.inProgress')
+                      : t('personas:enrichment.enrichExisting.tooltip')}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           {onEdit && (
             <Button variant="ghost" size="icon" onClick={onEdit}>
               <Edit className="h-4 w-4" />

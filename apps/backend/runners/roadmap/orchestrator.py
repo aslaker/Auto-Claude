@@ -17,6 +17,7 @@ from ui import Icons, box, icon, muted, print_section, print_status
 from .competitor_analyzer import CompetitorAnalyzer
 from .executor import AgentExecutor, ScriptExecutor
 from .graph_integration import GraphHintsProvider
+from .persona_generator import PersonaGenerator
 from .phases import DiscoveryPhase, FeaturesPhase, ProjectIndexPhase
 
 
@@ -32,6 +33,8 @@ class RoadmapOrchestrator:
         refresh: bool = False,
         enable_competitor_analysis: bool = False,
         refresh_competitor_analysis: bool = False,
+        enable_persona_generation: bool = False,
+        refresh_personas: bool = False,
     ):
         self.project_dir = Path(project_dir)
         self.model = model
@@ -40,6 +43,8 @@ class RoadmapOrchestrator:
         self.refresh = refresh
         self.enable_competitor_analysis = enable_competitor_analysis
         self.refresh_competitor_analysis = refresh_competitor_analysis
+        self.enable_persona_generation = enable_persona_generation
+        self.refresh_personas = refresh_personas
 
         # Default output to project's .auto-claude directory (installed instance)
         # Note: auto-claude/ is source code, .auto-claude/ is the installed instance
@@ -66,10 +71,15 @@ class RoadmapOrchestrator:
         self.graph_hints_provider = GraphHintsProvider(
             self.output_dir, self.project_dir, self.refresh
         )
-        # Competitor analyzer refreshes if either general refresh or specific competitor refresh
-        competitor_should_refresh = self.refresh or self.refresh_competitor_analysis
+        # Competitor analyzer refresh is controlled by user's explicit choice
+        # (analyzer handles case where file doesn't exist - it will generate regardless)
         self.competitor_analyzer = CompetitorAnalyzer(
-            self.output_dir, competitor_should_refresh, self.agent_executor
+            self.output_dir, self.refresh_competitor_analysis, self.agent_executor
+        )
+        # Persona generator refresh is controlled by user's explicit choice
+        # (generator handles case where file doesn't exist - it will generate regardless)
+        self.persona_generator = PersonaGenerator(
+            self.project_dir, self.refresh_personas, self.model, self.thinking_level
         )
         self.project_index_phase = ProjectIndexPhase(
             self.output_dir, self.refresh, self.script_executor
@@ -78,7 +88,7 @@ class RoadmapOrchestrator:
             self.output_dir, self.refresh, self.agent_executor
         )
         self.features_phase = FeaturesPhase(
-            self.output_dir, self.refresh, self.agent_executor
+            self.output_dir, self.refresh, self.agent_executor, self.project_dir
         )
 
         debug_section("roadmap_orchestrator", "Roadmap Orchestrator Initialized")
@@ -108,7 +118,8 @@ class RoadmapOrchestrator:
                 f"Project: {self.project_dir}\n"
                 f"Output: {self.output_dir}\n"
                 f"Model: {self.model}\n"
-                f"Competitor Analysis: {'enabled' if self.enable_competitor_analysis else 'disabled'}",
+                f"Competitor Analysis: {'enabled' if self.enable_competitor_analysis else 'disabled'}\n"
+                f"Persona Generation: {'enabled' if self.enable_persona_generation else 'disabled'}",
                 title="ROADMAP GENERATOR",
                 style="heavy",
             )
@@ -170,6 +181,14 @@ class RoadmapOrchestrator:
         )
         results.append(competitor_result)
         # Note: competitor_result.success is always True (graceful degradation)
+
+        # Phase 2.75: Persona Generation (optional, runs after competitor analysis)
+        print_section("PHASE 2.75: PERSONA GENERATION", Icons.USER)
+        persona_result = await self.persona_generator.generate(
+            enabled=self.enable_persona_generation
+        )
+        results.append(persona_result)
+        # Note: persona_result.success is always True (graceful degradation)
 
         # Phase 3: Feature Generation
         debug("roadmap_orchestrator", "Starting Phase 3: Feature Generation")

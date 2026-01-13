@@ -48,6 +48,7 @@ export function useIdeation(projectId: string, options: UseIdeationOptions = {})
   const [pendingAction, setPendingAction] = useState<'generate' | 'refresh' | 'append' | null>(null);
   const [showAddMoreDialog, setShowAddMoreDialog] = useState(false);
   const [typesToAdd, setTypesToAdd] = useState<IdeationType[]>([]);
+  const [selectedPersonaId, setSelectedPersonaId] = useState<string | null>(null);
 
   const { hasToken, isLoading: isCheckingToken, checkAuth } = useIdeationAuth();
 
@@ -183,7 +184,7 @@ export function useIdeation(projectId: string, options: UseIdeationOptions = {})
   // This eliminates render lag by using the context value directly instead of syncing via useEffect
   const effectiveShowArchived = externalShowArchived !== undefined ? externalShowArchived : showArchived;
 
-  // Filter ideas based on visibility settings
+  // Filter ideas based on visibility settings and persona filter
   const getFilteredIdeas = useCallback(() => {
     if (!session) return [];
     let ideas = session.ideas;
@@ -200,8 +201,15 @@ export function useIdeation(projectId: string, options: UseIdeationOptions = {})
     }
     // If both are true, show all
 
+    // Apply persona filter if selected
+    if (selectedPersonaId) {
+      ideas = ideas.filter(idea =>
+        idea.personaRelevance?.some(pr => pr.personaId === selectedPersonaId)
+      );
+    }
+
     return ideas;
-  }, [session, showDismissed, effectiveShowArchived]);
+  }, [session, showDismissed, effectiveShowArchived, selectedPersonaId]);
 
   const activeIdeas = getFilteredIdeas();
 
@@ -228,9 +236,11 @@ export function useIdeation(projectId: string, options: UseIdeationOptions = {})
     activeIdeas,
     archivedIdeas,
     selectedIds,
+    selectedPersonaId,
 
     // Actions
     setSelectedIdea,
+    setSelectedPersonaId,
     setActiveTab,
     setShowConfigDialog,
     setShowDismissed,

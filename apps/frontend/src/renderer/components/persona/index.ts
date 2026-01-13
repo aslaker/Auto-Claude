@@ -6,5 +6,6 @@ export { PersonaGenerationProgress } from './PersonaGenerationProgress';
 export { PersonaGrid } from './PersonaGrid';
 export { PersonaHeader } from './PersonaHeader';
 export { ResearchOptionDialog } from './ResearchOptionDialog';
+export { AddPersonaDialog } from './AddPersonaDialog';
 export * from './hooks';
 export type * from './types';

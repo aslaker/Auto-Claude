@@ -119,7 +119,16 @@ Write your findings to `{output_dir}/security_hardening_ideas.json`:
       "currentRisk": "Attacker can execute arbitrary SQL through the search parameter",
       "remediation": "Use parameterized queries with the database driver's prepared statement API. Replace string concatenation with bound parameters.",
       "references": ["https://owasp.org/www-community/attacks/SQL_Injection", "https://cwe.mitre.org/data/definitions/89.html"],
-      "compliance": ["SOC2", "PCI-DSS"]
+      "compliance": ["SOC2", "PCI-DSS"],
+      "persona_relevance": [
+        {
+          "persona_id": "persona-xxx",
+          "relevance_score": 90,
+          "addressed_goal_ids": ["goal-id-1"],
+          "addressed_pain_point_ids": ["pain-point-id-1"],
+          "rationale": "Why this security improvement benefits this persona"
+        }
+      ]
     }
   ],
   "metadata": {

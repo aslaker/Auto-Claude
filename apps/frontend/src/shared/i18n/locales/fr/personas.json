@@ -137,5 +137,246 @@
     },
     "enableButton": "Enable Research",
     "skipButton": "Skip Research"
+  },
+  "suggestionDialog": {
+    "title": "Generate User Personas?",
+    "description": "Your roadmap identified {{count}} target user types. Generate detailed personas to guide feature development.",
+    "refreshTitle": "Update User Personas?",
+    "refreshDescription": "Your roadmap identified new target audience information. Would you like to update your personas?",
+    "benefitsTitle": "User personas help you:",
+    "benefit1": "Understand who your users are and their goals",
+    "benefit2": "Prioritize features based on user impact",
+    "benefit3": "Tag tasks with target personas for persona-driven development",
+    "targetAudience": "Target audience discovered:",
+    "skipNote": "You can always generate personas later from the Personas tab.",
+    "generateButton": "Generate Personas",
+    "skipButton": "Skip for Now",
+    "keepExisting": "Keep current personas",
+    "keepExistingDescription": "Your existing personas are already well-defined. Continue using them.",
+    "refreshPersonas": "Refresh personas",
+    "refreshPersonasDescription": "Regenerate personas using the latest roadmap insights. This will replace existing personas."
+  },
+  "coverage": {
+    "title": "Couverture des Personas",
+    "status": {
+      "good": "Bien Servi",
+      "warning": "Attention Requise",
+      "critical": "Sous-servi"
+    },
+    "score": "Score de Couverture",
+    "ideas": "Idées",
+    "features": "Fonctionnalités",
+    "tasks": "Tâches",
+    "goalsCovered": "{{covered}}/{{total}} objectifs adressés",
+    "painPointsCovered": "{{covered}}/{{total}} points de douleur adressés",
+    "noPersonas": "Aucun persona disponible. Générez d'abord des personas pour voir l'analyse de couverture."
+  },
+  "gaps": {
+    "title": "Lacunes de Couverture",
+    "empty": "Aucune lacune détectée - tous les personas sont bien servis!",
+    "types": {
+      "unaddressed_goal": "Objectif Non Adressé",
+      "unaddressed_pain_point": "Point de Douleur Non Adressé",
+      "low_coverage": "Couverture Faible"
+    },
+    "suggestedAction": "Action Suggérée"
+  },
+  "filter": {
+    "label": "Filtrer par Persona",
+    "allPersonas": "Tous les Personas",
+    "showUnassigned": "Afficher Non Assignés",
+    "itemCount": "{{count}} éléments"
+  },
+  "health": {
+    "title": "Santé des Personas",
+    "description": "Suivez comment votre projet sert chaque persona",
+    "summary": {
+      "wellServed": "{{count}} bien servi(s)",
+      "needsAttention": "{{count}} nécessite(nt) attention",
+      "underserved": "{{count}} sous-servi(s)"
+    },
+    "averageCoverage": "Couverture Moyenne",
+    "recommendations": "Recommandations",
+    "noRecommendations": "Tous les personas sont bien adressés!"
+  },
+  "relevance": {
+    "label": "Pertinence Persona",
+    "high": "Haute Pertinence",
+    "medium": "Pertinence Moyenne",
+    "low": "Faible Pertinence",
+    "addressesGoals": "Adresse {{count}} objectif(s)",
+    "addressesPainPoints": "Adresse {{count}} point(s) de douleur"
+  },
+  "impact": {
+    "label": "Impact Persona",
+    "score": "Score d'Impact: {{score}}",
+    "targetedPersonas": "Personas Ciblés",
+    "addressedGoals": "Objectifs Adressés",
+    "addressedPainPoints": "Points de Douleur Adressés"
+  },
+  "sorting": {
+    "byPersonaImpact": "Impact Persona",
+    "sortDescription": "Trier par impact persona (Principal > Secondaire > Cas Limite)"
+  },
+  "addDialog": {
+    "title": "Ajouter un Nouveau Persona",
+    "modeSelection": {
+      "title": "Choisir la Méthode de Création",
+      "description": "Comment souhaitez-vous créer votre persona?"
+    },
+    "aiAssisted": {
+      "title": "Assisté par IA",
+      "recommended": "Recommandé",
+      "description": "Fournissez les détails de base et laissez l'IA rechercher et compléter le reste",
+      "benefit1": "Découverte automatique des points de douleur",
+      "benefit2": "Citations et comportements réels",
+      "benefit3": "Insights spécifiques à l'industrie"
+    },
+    "manual": {
+      "title": "Saisie Manuelle",
+      "description": "Entrez tous les détails du persona vous-même",
+      "benefit1": "Contrôle total sur tous les champs",
+      "benefit2": "Idéal pour les utilisateurs avancés"
+    },
+    "form": {
+      "role": {
+        "label": "Rôle / Titre",
+        "placeholder": "ex., Ingénieur Sécurité, Chef de Produit",
+        "required": "Le rôle est requis"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Décrivez qui est cette personne et pourquoi elle est pertinente pour votre produit...",
+        "required": "La description est requise"
+      },
+      "type": {
+        "label": "Type de Persona",
+        "placeholder": "Sélectionner le type...",
+        "required": "Le type est requis"
+      },
+      "primaryGoal": {
+        "label": "Objectif Principal",
+        "placeholder": "Que veulent-ils accomplir avec votre produit?",
+        "hint": "Recommandé - aide à cibler la recherche IA"
+      },
+      "experienceLevel": {
+        "label": "Niveau d'Expérience",
+        "placeholder": "Sélectionner le niveau d'expérience..."
+      },
+      "industry": {
+        "label": "Industrie",
+        "placeholder": "ex., Santé, Finance, SaaS"
+      },
+      "name": {
+        "label": "Nom",
+        "placeholder": "ex., Alex le Développeur API",
+        "required": "Le nom est requis"
+      },
+      "tagline": {
+        "label": "Slogan",
+        "placeholder": "Une brève description de ce persona"
+      },
+      "companySize": {
+        "label": "Taille de l'Entreprise",
+        "placeholder": "Sélectionner la taille..."
+      },
+      "usageFrequency": {
+        "label": "Fréquence d'Utilisation",
+        "placeholder": "Sélectionner la fréquence..."
+      }
+    },
+    "goals": {
+      "title": "Objectifs",
+      "addButton": "Ajouter un Objectif",
+      "placeholder": "Décrivez l'objectif...",
+      "required": "Au moins un objectif est requis"
+    },
+    "painPoints": {
+      "title": "Points de Douleur",
+      "addButton": "Ajouter un Point de Douleur",
+      "placeholder": "Décrivez le point de douleur...",
+      "workaround": "Solution de contournement actuelle (optionnel)",
+      "required": "Au moins un point de douleur est requis"
+    },
+    "behaviors": {
+      "title": "Comportements",
+      "channels": {
+        "label": "Canaux Préférés",
+        "placeholder": "CLI, API, Tableau de bord..."
+      },
+      "decisionFactors": {
+        "label": "Facteurs de Décision",
+        "placeholder": "Prix, facilité d'utilisation, support..."
+      },
+      "toolStack": {
+        "label": "Stack Technique",
+        "placeholder": "Technologies utilisées..."
+      }
+    },
+    "quotes": {
+      "title": "Citations",
+      "addButton": "Ajouter une Citation",
+      "placeholder": "Quelque chose que ce persona pourrait dire..."
+    },
+    "scenarios": {
+      "title": "Scénarios d'Utilisation",
+      "addButton": "Ajouter un Scénario",
+      "titleField": "Titre du scénario",
+      "contextField": "Contexte / situation",
+      "actionField": "Ce qu'ils font",
+      "outcomeField": "Résultat attendu"
+    },
+    "steps": {
+      "identity": "Identité",
+      "demographics": "Démographie",
+      "goalsAndPainPoints": "Objectifs & Points de Douleur",
+      "details": "Détails"
+    },
+    "buttons": {
+      "back": "Retour",
+      "next": "Suivant",
+      "create": "Créer le Persona",
+      "createWithAI": "Créer avec IA",
+      "cancel": "Annuler"
+    },
+    "validation": {
+      "minOneGoal": "Veuillez ajouter au moins un objectif",
+      "minOnePainPoint": "Veuillez ajouter au moins un point de douleur"
+    }
+  },
+  "enrichment": {
+    "title": "Enrichissement du Persona",
+    "description": "L'IA recherche et génère votre persona...",
+    "phases": {
+      "researching": {
+        "label": "Recherche",
+        "description": "Recherche web en cours pour des insights..."
+      },
+      "generating": {
+        "label": "Génération",
+        "description": "Création du profil persona détaillé..."
+      },
+      "complete": {
+        "label": "Terminé",
+        "description": "Persona créé avec succès!"
+      },
+      "error": {
+        "label": "Erreur",
+        "description": "Échec de la création du persona"
+      }
+    },
+    "enrichExisting": {
+      "button": "Enrichir avec IA",
+      "tooltip": "Utiliser l'IA pour ajouter des citations, comportements et insights",
+      "inProgress": "Enrichissement..."
+    },
+    "notEnriched": {
+      "badge": "Non enrichi",
+      "tooltip": "Ce persona a été créé manuellement et peut être enrichi avec la recherche IA"
+    },
+    "enriched": {
+      "badge": "Amélioré par IA",
+      "tooltip": "Ce persona a été enrichi avec la recherche IA"
+    }
   }
 }

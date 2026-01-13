@@ -3,6 +3,8 @@ import type {
   Persona,
   PersonasConfig,
   PersonaGenerationStatus,
+  PersonaEnrichmentInput,
+  PersonaEnrichmentStatus,
   IPCResult
 } from '../../../shared/types';
 import { createIpcListener, invokeIpc, sendIpc, IpcListenerCleanup } from './ipc-utils';
@@ -29,6 +31,11 @@ export interface PersonaAPI {
   deletePersona: (projectId: string, personaId: string) => Promise<IPCResult>;
   addPersona: (projectId: string, persona: Persona) => Promise<IPCResult>;
 
+  // Enrichment operations (AI-assisted creation)
+  enrichNewPersona: (projectId: string, input: PersonaEnrichmentInput) => void;
+  enrichExistingPersona: (projectId: string, personaId: string) => void;
+  addManualPersona: (projectId: string, persona: Persona) => Promise<IPCResult<Persona>>;
+
   // Event Listeners
   onPersonaProgress: (
     callback: (projectId: string, status: PersonaGenerationStatus) => void
@@ -41,6 +48,17 @@ export interface PersonaAPI {
   ) => IpcListenerCleanup;
   onPersonaStopped: (
     callback: (projectId: string) => void
+  ) => IpcListenerCleanup;
+
+  // Enrichment event listeners
+  onPersonaEnrichmentProgress: (
+    callback: (projectId: string, status: PersonaEnrichmentStatus) => void
+  ) => IpcListenerCleanup;
+  onPersonaEnrichmentComplete: (
+    callback: (projectId: string, persona: Persona) => void
+  ) => IpcListenerCleanup;
+  onPersonaEnrichmentError: (
+    callback: (projectId: string, error: string) => void
   ) => IpcListenerCleanup;
 }
 
@@ -77,6 +95,16 @@ export const createPersonaAPI = (): PersonaAPI => ({
   addPersona: (projectId: string, persona: Persona): Promise<IPCResult> =>
     invokeIpc(IPC_CHANNELS.PERSONA_ADD, projectId, persona),
 
+  // Enrichment operations
+  enrichNewPersona: (projectId: string, input: PersonaEnrichmentInput): void =>
+    sendIpc(IPC_CHANNELS.PERSONA_ENRICH_NEW, projectId, input),
+
+  enrichExistingPersona: (projectId: string, personaId: string): void =>
+    sendIpc(IPC_CHANNELS.PERSONA_ENRICH_EXISTING, projectId, personaId),
+
+  addManualPersona: (projectId: string, persona: Persona): Promise<IPCResult<Persona>> =>
+    invokeIpc(IPC_CHANNELS.PERSONA_ADD_MANUAL, projectId, persona),
+
   // Event Listeners
   onPersonaProgress: (
     callback: (projectId: string, status: PersonaGenerationStatus) => void
@@ -96,5 +124,21 @@ export const createPersonaAPI = (): PersonaAPI => ({
   onPersonaStopped: (
     callback: (projectId: string) => void
   ): IpcListenerCleanup =>
-    createIpcListener(IPC_CHANNELS.PERSONA_STOPPED, callback)
+    createIpcListener(IPC_CHANNELS.PERSONA_STOPPED, callback),
+
+  // Enrichment event listeners
+  onPersonaEnrichmentProgress: (
+    callback: (projectId: string, status: PersonaEnrichmentStatus) => void
+  ): IpcListenerCleanup =>
+    createIpcListener(IPC_CHANNELS.PERSONA_ENRICHMENT_PROGRESS, callback),
+
+  onPersonaEnrichmentComplete: (
+    callback: (projectId: string, persona: Persona) => void
+  ): IpcListenerCleanup =>
+    createIpcListener(IPC_CHANNELS.PERSONA_ENRICHMENT_COMPLETE, callback),
+
+  onPersonaEnrichmentError: (
+    callback: (projectId: string, error: string) => void
+  ): IpcListenerCleanup =>
+    createIpcListener(IPC_CHANNELS.PERSONA_ENRICHMENT_ERROR, callback)
 });

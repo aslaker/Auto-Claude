@@ -20,6 +20,21 @@ export type IdeationType =
 export type IdeationStatus = 'draft' | 'selected' | 'converted' | 'dismissed' | 'archived';
 export type IdeationGenerationPhase = 'idle' | 'analyzing' | 'discovering' | 'generating' | 'finalizing' | 'complete' | 'error';
 
+// ============================================
+// Persona Relevance Types
+// ============================================
+
+/**
+ * Represents how relevant an idea is to a specific persona
+ */
+export interface PersonaRelevanceScore {
+  personaId: string;
+  relevanceScore: number; // 0-100
+  addressedGoalIds?: string[];
+  addressedPainPointIds?: string[];
+  rationale?: string;
+}
+
 export interface IdeationConfig {
   enabledTypes: IdeationType[];
   includeRoadmapContext: boolean;
@@ -38,6 +53,7 @@ export interface IdeaBase {
   status: IdeationStatus;
   createdAt: Date;
   taskId?: string; // ID of the created task when status is 'converted'
+  personaRelevance?: PersonaRelevanceScore[]; // Which personas this idea benefits
 }
 
 export interface CodeImprovementIdea extends IdeaBase {

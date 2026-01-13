@@ -137,5 +137,246 @@
     },
     "enableButton": "Enable Research",
     "skipButton": "Skip Research"
+  },
+  "suggestionDialog": {
+    "title": "Generate User Personas?",
+    "description": "Your roadmap identified {{count}} target user types. Generate detailed personas to guide feature development.",
+    "refreshTitle": "Update User Personas?",
+    "refreshDescription": "Your roadmap identified new target audience information. Would you like to update your personas?",
+    "benefitsTitle": "User personas help you:",
+    "benefit1": "Understand who your users are and their goals",
+    "benefit2": "Prioritize features based on user impact",
+    "benefit3": "Tag tasks with target personas for persona-driven development",
+    "targetAudience": "Target audience discovered:",
+    "skipNote": "You can always generate personas later from the Personas tab.",
+    "generateButton": "Generate Personas",
+    "skipButton": "Skip for Now",
+    "keepExisting": "Keep current personas",
+    "keepExistingDescription": "Your existing personas are already well-defined. Continue using them.",
+    "refreshPersonas": "Refresh personas",
+    "refreshPersonasDescription": "Regenerate personas using the latest roadmap insights. This will replace existing personas."
+  },
+  "coverage": {
+    "title": "Persona Coverage",
+    "status": {
+      "good": "Well Served",
+      "warning": "Needs Attention",
+      "critical": "Underserved"
+    },
+    "score": "Coverage Score",
+    "ideas": "Ideas",
+    "features": "Features",
+    "tasks": "Tasks",
+    "goalsCovered": "{{covered}}/{{total}} goals addressed",
+    "painPointsCovered": "{{covered}}/{{total}} pain points addressed",
+    "noPersonas": "No personas available. Generate personas first to see coverage analysis."
+  },
+  "gaps": {
+    "title": "Coverage Gaps",
+    "empty": "No gaps detected - all personas are well served!",
+    "types": {
+      "unaddressed_goal": "Unaddressed Goal",
+      "unaddressed_pain_point": "Unaddressed Pain Point",
+      "low_coverage": "Low Coverage"
+    },
+    "suggestedAction": "Suggested Action"
+  },
+  "filter": {
+    "label": "Filter by Persona",
+    "allPersonas": "All Personas",
+    "showUnassigned": "Show Unassigned",
+    "itemCount": "{{count}} items"
+  },
+  "health": {
+    "title": "Persona Health",
+    "description": "Track how well your project serves each persona",
+    "summary": {
+      "wellServed": "{{count}} well served",
+      "needsAttention": "{{count}} need attention",
+      "underserved": "{{count}} underserved"
+    },
+    "averageCoverage": "Average Coverage",
+    "recommendations": "Recommendations",
+    "noRecommendations": "All personas are being well addressed!"
+  },
+  "relevance": {
+    "label": "Persona Relevance",
+    "high": "High Relevance",
+    "medium": "Medium Relevance",
+    "low": "Low Relevance",
+    "addressesGoals": "Addresses {{count}} goal(s)",
+    "addressesPainPoints": "Addresses {{count}} pain point(s)"
+  },
+  "impact": {
+    "label": "Persona Impact",
+    "score": "Impact Score: {{score}}",
+    "targetedPersonas": "Targeted Personas",
+    "addressedGoals": "Addressed Goals",
+    "addressedPainPoints": "Addressed Pain Points"
+  },
+  "sorting": {
+    "byPersonaImpact": "Persona Impact",
+    "sortDescription": "Sort by persona impact (Primary > Secondary > Edge Case)"
+  },
+  "addDialog": {
+    "title": "Add New Persona",
+    "modeSelection": {
+      "title": "Choose Creation Method",
+      "description": "How would you like to create your persona?"
+    },
+    "aiAssisted": {
+      "title": "AI-Assisted",
+      "recommended": "Recommended",
+      "description": "Provide basic details and let AI research and fill in the rest",
+      "benefit1": "Automatic pain point discovery",
+      "benefit2": "Real-world quotes and behaviors",
+      "benefit3": "Industry-specific insights"
+    },
+    "manual": {
+      "title": "Manual Entry",
+      "description": "Enter all persona details yourself",
+      "benefit1": "Full control over all fields",
+      "benefit2": "Best for power users"
+    },
+    "form": {
+      "role": {
+        "label": "Role / Title",
+        "placeholder": "e.g., Security Engineer, Product Manager",
+        "required": "Role is required"
+      },
+      "description": {
+        "label": "Description",
+        "placeholder": "Describe who this person is and why they're relevant to your product...",
+        "required": "Description is required"
+      },
+      "type": {
+        "label": "Persona Type",
+        "placeholder": "Select type...",
+        "required": "Type is required"
+      },
+      "primaryGoal": {
+        "label": "Primary Goal",
+        "placeholder": "What do they want to achieve with your product?",
+        "hint": "Recommended - helps focus AI research"
+      },
+      "experienceLevel": {
+        "label": "Experience Level",
+        "placeholder": "Select experience level..."
+      },
+      "industry": {
+        "label": "Industry",
+        "placeholder": "e.g., Healthcare, Finance, SaaS"
+      },
+      "name": {
+        "label": "Name",
+        "placeholder": "e.g., Alex the API Developer",
+        "required": "Name is required"
+      },
+      "tagline": {
+        "label": "Tagline",
+        "placeholder": "A brief description of this persona"
+      },
+      "companySize": {
+        "label": "Company Size",
+        "placeholder": "Select company size..."
+      },
+      "usageFrequency": {
+        "label": "Usage Frequency",
+        "placeholder": "Select frequency..."
+      }
+    },
+    "goals": {
+      "title": "Goals",
+      "addButton": "Add Goal",
+      "placeholder": "Describe the goal...",
+      "required": "At least one goal is required"
+    },
+    "painPoints": {
+      "title": "Pain Points",
+      "addButton": "Add Pain Point",
+      "placeholder": "Describe the pain point...",
+      "workaround": "Current workaround (optional)",
+      "required": "At least one pain point is required"
+    },
+    "behaviors": {
+      "title": "Behaviors",
+      "channels": {
+        "label": "Preferred Channels",
+        "placeholder": "CLI, API, Dashboard..."
+      },
+      "decisionFactors": {
+        "label": "Decision Factors",
+        "placeholder": "Price, ease of use, support..."
+      },
+      "toolStack": {
+        "label": "Tool Stack",
+        "placeholder": "Technologies they use..."
+      }
+    },
+    "quotes": {
+      "title": "Quotes",
+      "addButton": "Add Quote",
+      "placeholder": "Something this persona might say..."
+    },
+    "scenarios": {
+      "title": "Usage Scenarios",
+      "addButton": "Add Scenario",
+      "titleField": "Scenario title",
+      "contextField": "Context / situation",
+      "actionField": "What they do",
+      "outcomeField": "Expected outcome"
+    },
+    "steps": {
+      "identity": "Identity",
+      "demographics": "Demographics",
+      "goalsAndPainPoints": "Goals & Pain Points",
+      "details": "Details"
+    },
+    "buttons": {
+      "back": "Back",
+      "next": "Next",
+      "create": "Create Persona",
+      "createWithAI": "Create with AI",
+      "cancel": "Cancel"
+    },
+    "validation": {
+      "minOneGoal": "Please add at least one goal",
+      "minOnePainPoint": "Please add at least one pain point"
+    }
+  },
+  "enrichment": {
+    "title": "Enriching Persona",
+    "description": "AI is researching and generating your persona...",
+    "phases": {
+      "researching": {
+        "label": "Researching",
+        "description": "Conducting web research for insights..."
+      },
+      "generating": {
+        "label": "Generating",
+        "description": "Creating detailed persona profile..."
+      },
+      "complete": {
+        "label": "Complete",
+        "description": "Persona created successfully!"
+      },
+      "error": {
+        "label": "Error",
+        "description": "Failed to create persona"
+      }
+    },
+    "enrichExisting": {
+      "button": "Enrich with AI",
+      "tooltip": "Use AI to add quotes, behaviors, and insights",
+      "inProgress": "Enriching..."
+    },
+    "notEnriched": {
+      "badge": "Not enriched",
+      "tooltip": "This persona was created manually and can be enriched with AI research"
+    },
+    "enriched": {
+      "badge": "AI Enhanced",
+      "tooltip": "This persona has been enriched with AI research"
+    }
   }
 }

@@ -51,4 +51,6 @@ export interface RoadmapTabsProps {
   onConvertToSpec: (feature: RoadmapFeature) => void;
   onGoToTask: (specId: string) => void;
   onSave?: () => void;
+  selectedPersonaId?: string | null;
+  onPersonaChange?: (personaId: string | null) => void;
 }

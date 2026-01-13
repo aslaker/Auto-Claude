@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Play, Square, Clock, Zap, Target, Shield, Gauge, Palette, FileCode, Bug, Wrench, Loader2, AlertTriangle, RotateCcw, Archive, GitPullRequest, MoreVertical } from 'lucide-react';
+import { Play, Square, Clock, Zap, Target, Shield, Gauge, Palette, FileCode, Bug, Wrench, Loader2, AlertTriangle, RotateCcw, Archive, GitPullRequest, MoreVertical, Users } from 'lucide-react';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -75,6 +75,7 @@ function taskCardPropsAreEqual(prevProps: TaskCardProps, nextProps: TaskCardProp
     prevTask.metadata?.complexity === nextTask.metadata?.complexity &&
     prevTask.metadata?.archivedAt === nextTask.metadata?.archivedAt &&
     prevTask.metadata?.prUrl === nextTask.metadata?.prUrl &&
+    prevTask.metadata?.targetPersonaIds?.length === nextTask.metadata?.targetPersonaIds?.length &&
     // Check if any subtask statuses changed (compare all subtasks)
     prevTask.subtasks.every((s, i) => s.status === nextTask.subtasks[i]?.status)
   );
@@ -459,6 +460,18 @@ export const TaskCard = memo(function TaskCard({ task, onClick, onStatusChange }
                 className={cn('text-[10px] px-1.5 py-0', TASK_IMPACT_COLORS[task.metadata.securitySeverity])}
               >
                 {task.metadata.securitySeverity} {t('metadata.severity')}
+              </Badge>
+            )}
+            {/* Persona targeting badge */}
+            {task.metadata?.targetPersonaIds && task.metadata.targetPersonaIds.length > 0 && (
+              <Badge
+                variant="outline"
+                className="text-[10px] px-1.5 py-0.5 flex items-center gap-1 bg-purple-500/10 text-purple-400 border-purple-500/30"
+              >
+                <Users className="h-2.5 w-2.5" />
+                {task.metadata.targetPersonaIds.length === 1
+                  ? t('metadata.persona', '1 persona')
+                  : t('metadata.personas', '{{count}} personas', { count: task.metadata.targetPersonaIds.length })}
               </Badge>
             )}
           </div>

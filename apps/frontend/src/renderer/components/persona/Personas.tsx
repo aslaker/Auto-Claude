@@ -5,7 +5,8 @@ import { PersonaHeader } from './PersonaHeader';
 import { PersonaGrid } from './PersonaGrid';
 import { PersonaDetailPanel } from './PersonaDetailPanel';
 import { ResearchOptionDialog } from './ResearchOptionDialog';
-import { usePersonaData, usePersonaGeneration, usePersonaDelete } from './hooks';
+import { AddPersonaDialog } from './AddPersonaDialog';
+import { usePersonaData, usePersonaGeneration, usePersonaDelete, usePersonaEnrichment } from './hooks';
 import type { Persona } from '../../../shared/types';
 import type { PersonasProps } from './types';
 
@@ -25,6 +26,7 @@ export function Personas({ projectId }: PersonasProps) {
     handleStop,
   } = usePersonaGeneration(projectId);
   const { deletePersona } = usePersonaDelete(projectId);
+  const { isEnriching, enrichingPersonaId, enrichExistingPersona } = usePersonaEnrichment(projectId);
 
   // Handle persona deletion
   const handleDeletePersona = async (personaId: string) => {
@@ -87,6 +89,8 @@ export function Personas({ projectId }: PersonasProps) {
           persona={selectedPersona}
           onClose={() => setSelectedPersona(null)}
           onDelete={handleDeletePersona}
+          onEnrich={enrichExistingPersona}
+          isEnriching={isEnriching && enrichingPersonaId === selectedPersona.id}
         />
       )}
 
@@ -98,7 +102,19 @@ export function Personas({ projectId }: PersonasProps) {
         onSkipResearch={handleSkipResearch}
       />
 
-      {/* TODO: Add AddPersonaDialog when needed */}
+      {/* Add Persona Dialog */}
+      <AddPersonaDialog
+        open={showAddDialog}
+        onOpenChange={setShowAddDialog}
+        projectId={projectId}
+        onPersonaAdded={(personaId) => {
+          // Optionally select the newly added persona
+          const newPersona = personas.find((p) => p.id === personaId);
+          if (newPersona) {
+            setSelectedPersona(newPersona);
+          }
+        }}
+      />
     </div>
   );
 }

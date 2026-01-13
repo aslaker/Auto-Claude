@@ -131,6 +131,23 @@ const browserMockAPI: ElectronAPI = {
   offPersonaError: () => {},
   offPersonaStopped: () => {},
 
+  // Persona Enrichment Operations
+  enrichNewPersona: (_projectId: string, _input: any) => {
+    console.warn('[Browser Mock] enrichNewPersona called');
+  },
+  enrichExistingPersona: (_projectId: string, _personaId: string) => {
+    console.warn('[Browser Mock] enrichExistingPersona called');
+  },
+  addManualPersona: async (_projectId: string, _persona: any) => ({
+    success: true,
+    data: _persona
+  }),
+
+  // Persona Enrichment Event Listeners
+  onPersonaEnrichmentProgress: () => () => {},
+  onPersonaEnrichmentComplete: () => () => {},
+  onPersonaEnrichmentError: () => () => {},
+
   // Context Operations
   ...contextMock,
 

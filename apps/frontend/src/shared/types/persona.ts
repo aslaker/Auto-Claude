@@ -250,6 +250,78 @@ export interface PersonaResearchResult {
 }
 
 // ============================================
+// Persona Creation Input Types
+// ============================================
+
+/**
+ * Input for AI-assisted persona creation.
+ * User provides minimal key details, AI researches and fills in the rest.
+ */
+export interface PersonaEnrichmentInput {
+  role: string; // Required - Core identity (e.g., "Security Engineer")
+  description: string; // Required - Who they are and why relevant to this product
+  type: PersonaType; // Required - primary/secondary/edge-case
+  primaryGoal?: string; // Recommended - What they want to achieve
+  experienceLevel?: ExperienceLevel; // Optional
+  industry?: string; // Optional - Helps narrow research
+}
+
+/**
+ * Input for manual persona creation.
+ * User provides all details themselves.
+ */
+export interface PersonaManualInput {
+  name: string; // Required
+  type: PersonaType; // Required
+  tagline?: string; // Optional
+  demographics: {
+    role: string; // Required
+    experienceLevel?: ExperienceLevel;
+    industry?: string;
+    companySize?: CompanySize;
+  };
+  behaviors?: {
+    usageFrequency?: UsageFrequency;
+    preferredChannels?: string[];
+    decisionFactors?: string[];
+    toolStack?: string[];
+  };
+  goals: Array<{
+    description: string;
+    priority: GoalPriority;
+  }>; // Required - min 1
+  painPoints: Array<{
+    description: string;
+    severity: PainPointSeverity;
+    currentWorkaround?: string;
+  }>; // Required - min 1
+  quotes?: string[];
+  scenarios?: Array<{
+    title: string;
+    context: string;
+    action: string;
+    outcome: string;
+  }>;
+}
+
+/**
+ * Status for single persona enrichment operation.
+ */
+export type PersonaEnrichmentPhase =
+  | 'idle'
+  | 'researching'
+  | 'generating'
+  | 'complete'
+  | 'error';
+
+export interface PersonaEnrichmentStatus {
+  phase: PersonaEnrichmentPhase;
+  progress: number; // 0-100
+  message: string;
+  error?: string;
+}
+
+// ============================================
 // Task Integration Types
 // ============================================
 

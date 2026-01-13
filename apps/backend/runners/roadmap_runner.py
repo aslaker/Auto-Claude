@@ -32,7 +32,7 @@ if env_file.exists():
 from debug import debug, debug_error, debug_warning
 
 # Import from refactored roadmap package
-from roadmap import RoadmapOrchestrator
+from runners.roadmap import RoadmapOrchestrator
 
 
 def main():
@@ -84,6 +84,18 @@ def main():
         dest="refresh_competitor_analysis",
         help="Force refresh competitor analysis even if it exists (requires --competitor-analysis)",
     )
+    parser.add_argument(
+        "--persona-generation",
+        action="store_true",
+        dest="enable_persona_generation",
+        help="Enable persona generation phase",
+    )
+    parser.add_argument(
+        "--refresh-personas",
+        action="store_true",
+        dest="refresh_personas",
+        help="Force refresh personas even if they exist (requires --persona-generation)",
+    )
 
     args = parser.parse_args()
 
@@ -119,6 +131,8 @@ def main():
         refresh=args.refresh,
         enable_competitor_analysis=args.enable_competitor_analysis,
         refresh_competitor_analysis=args.refresh_competitor_analysis,
+        enable_persona_generation=args.enable_persona_generation,
+        refresh_personas=args.refresh_personas,
     )
 
     try:

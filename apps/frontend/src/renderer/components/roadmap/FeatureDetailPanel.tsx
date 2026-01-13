@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ChevronRight,
@@ -11,18 +11,39 @@ import {
   ExternalLink,
   TrendingUp,
   Trash2,
+  Star,
+  AlertTriangle,
 } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { ScrollArea } from '../ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip';
 import {
   ROADMAP_PRIORITY_COLORS,
   ROADMAP_PRIORITY_LABELS,
   ROADMAP_COMPLEXITY_COLORS,
   ROADMAP_IMPACT_COLORS,
+  PERSONA_TYPE_COLORS,
+  PERSONA_TYPE_LABELS,
 } from '../../../shared/constants';
+import { usePersonaStore, getPersonaById } from '../../stores/persona-store';
 import type { FeatureDetailPanelProps } from './types';
+import type { Persona } from '../../../shared/types';
+
+// Helper to get persona type icon
+function getPersonaTypeIcon(type: Persona['type']) {
+  switch (type) {
+    case 'primary':
+      return Star;
+    case 'secondary':
+      return Users;
+    case 'edge-case':
+      return AlertTriangle;
+    default:
+      return Users;
+  }
+}
 
 export function FeatureDetailPanel({
   feature,
@@ -32,8 +53,25 @@ export function FeatureDetailPanel({
   onDelete,
   competitorInsights = [],
 }: FeatureDetailPanelProps) {
-  const { t } = useTranslation('common');
+  const { t } = useTranslation(['common', 'roadmap']);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const personas = usePersonaStore((state) => state.personas);
+
+  // Get targeted personas for this feature
+  const targetedPersonas = useMemo(() => {
+    if (!feature.targetPersonaIds?.length) return [];
+    return feature.targetPersonaIds
+      .map((id) => getPersonaById(personas, id))
+      .filter((p): p is Persona => !!p);
+  }, [feature.targetPersonaIds, personas]);
+
+  // Get persona impact for a specific persona
+  const getImpactForPersona = (personaId: string) => {
+    if (!feature.personaImpact) return null;
+    return feature.personaImpact.find(
+      (impact) => impact.personaId === personaId
+    );
+  };
 
   const handleDelete = () => {
     if (onDelete) {
@@ -58,6 +96,37 @@ export function FeatureDetailPanel({
               >
                 {feature.complexity}
               </Badge>
+              {/* Persona avatars in header */}
+              {targetedPersonas.length > 0 && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center -space-x-2 ml-1">
+                      {targetedPersonas.slice(0, 3).map((persona) => (
+                        <div
+                          key={persona.id}
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-semibold text-white border-2 border-card"
+                          style={{ backgroundColor: persona.avatar.color }}
+                        >
+                          {persona.avatar.initials}
+                        </div>
+                      ))}
+                      {targetedPersonas.length > 3 && (
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium bg-muted text-muted-foreground border-2 border-card">
+                          +{targetedPersonas.length - 3}
+                        </div>
+                      )}
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    <div className="text-sm">
+                      <div className="font-medium mb-1">{t('roadmap:featureDetail.targetPersonas')}</div>
+                      <div className="text-muted-foreground">
+                        {targetedPersonas.map((p) => p.name).join(', ')}
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
             <h2 className="font-semibold truncate">{feature.title}</h2>
           </div>
@@ -154,6 +223,62 @@ export function FeatureDetailPanel({
                 </li>
               ))}
             </ul>
+          </div>
+        )}
+
+        {/* Target Personas */}
+        {targetedPersonas.length > 0 && (
+          <div>
+            <h3 className="text-sm font-medium mb-2 flex items-center gap-2">
+              <Users className="h-4 w-4 text-purple-500" />
+              {t('roadmap:featureDetail.targetPersonas')}
+            </h3>
+            <div className="space-y-2">
+              {targetedPersonas.map((persona) => {
+                const TypeIcon = getPersonaTypeIcon(persona.type);
+                const impact = getImpactForPersona(persona.id);
+                return (
+                  <div
+                    key={persona.id}
+                    className="flex items-center gap-3 p-2 bg-muted/50 rounded-md"
+                  >
+                    {/* Avatar */}
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold text-white flex-shrink-0"
+                      style={{ backgroundColor: persona.avatar.color }}
+                    >
+                      {persona.avatar.initials}
+                    </div>
+                    {/* Name and badges */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-medium truncate">{persona.name}</span>
+                        <Badge
+                          variant="outline"
+                          className={`text-xs ${PERSONA_TYPE_COLORS[persona.type]}`}
+                        >
+                          <TypeIcon className="h-3 w-3 mr-1" />
+                          {PERSONA_TYPE_LABELS[persona.type]}
+                        </Badge>
+                        {impact && (
+                          <Badge
+                            variant="outline"
+                            className="text-xs bg-success/10 text-success border-success/30"
+                          >
+                            {t('roadmap:featureDetail.impactScore', { score: impact.impactScore })}
+                          </Badge>
+                        )}
+                      </div>
+                      {persona.tagline && (
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          {persona.tagline}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 

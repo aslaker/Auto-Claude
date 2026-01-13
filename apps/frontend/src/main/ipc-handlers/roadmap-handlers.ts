@@ -174,7 +174,17 @@ export function registerRoadmapHandlers(
             acceptanceCriteria: feature.acceptance_criteria || [],
             userStories: feature.user_stories || [],
             linkedSpecId: feature.linked_spec_id,
-            competitorInsightIds: (feature.competitor_insight_ids as string[]) || undefined
+            competitorInsightIds: (feature.competitor_insight_ids as string[]) || undefined,
+            // Persona targeting fields
+            targetPersonaIds: (feature.target_persona_ids as string[]) || undefined,
+            personaImpact: feature.persona_impact
+              ? (feature.persona_impact as Array<Record<string, unknown>>).map((impact) => ({
+                  personaId: impact.persona_id as string,
+                  impactScore: impact.impact_score as number,
+                  addressedGoalIds: (impact.addressed_goal_ids as string[]) || undefined,
+                  addressedPainPointIds: (impact.addressed_pain_point_ids as string[]) || undefined,
+                }))
+              : undefined,
           })),
           status: rawRoadmap.status || 'draft',
           competitorAnalysis,
@@ -204,7 +214,7 @@ export function registerRoadmapHandlers(
 
   ipcMain.on(
     IPC_CHANNELS.ROADMAP_GENERATE,
-    (_, projectId: string, enableCompetitorAnalysis?: boolean, refreshCompetitorAnalysis?: boolean) => {
+    (_, projectId: string, enableCompetitorAnalysis?: boolean, refreshCompetitorAnalysis?: boolean, enablePersonaGeneration?: boolean, refreshPersonas?: boolean) => {
       // Get feature settings for roadmap
       const featureSettings = getFeatureSettings();
       const config: RoadmapConfig = {
@@ -216,6 +226,8 @@ export function registerRoadmapHandlers(
         projectId,
         enableCompetitorAnalysis,
         refreshCompetitorAnalysis,
+        enablePersonaGeneration,
+        refreshPersonas,
         config
       });
 
@@ -246,7 +258,9 @@ export function registerRoadmapHandlers(
         false, // refresh (not a refresh operation)
         enableCompetitorAnalysis ?? false,
         refreshCompetitorAnalysis ?? false,
-        config
+        config,
+        enablePersonaGeneration ?? false,
+        refreshPersonas ?? false
       );
 
       // Send initial progress
@@ -264,7 +278,7 @@ export function registerRoadmapHandlers(
 
   ipcMain.on(
     IPC_CHANNELS.ROADMAP_REFRESH,
-    (_, projectId: string, enableCompetitorAnalysis?: boolean, refreshCompetitorAnalysis?: boolean) => {
+    (_, projectId: string, enableCompetitorAnalysis?: boolean, refreshCompetitorAnalysis?: boolean, enablePersonaGeneration?: boolean, refreshPersonas?: boolean) => {
       // Get feature settings for roadmap
       const featureSettings = getFeatureSettings();
       const config: RoadmapConfig = {
@@ -276,6 +290,8 @@ export function registerRoadmapHandlers(
         projectId,
         enableCompetitorAnalysis,
         refreshCompetitorAnalysis,
+        enablePersonaGeneration,
+        refreshPersonas,
         config
       });
 
@@ -299,7 +315,9 @@ export function registerRoadmapHandlers(
         true, // refresh (this is a refresh operation)
         enableCompetitorAnalysis ?? false,
         refreshCompetitorAnalysis ?? false,
-        config
+        config,
+        enablePersonaGeneration ?? false,
+        refreshPersonas ?? false
       );
 
       // Send initial progress
@@ -381,7 +399,17 @@ export function registerRoadmapHandlers(
           acceptance_criteria: feature.acceptanceCriteria || [],
           user_stories: feature.userStories || [],
           linked_spec_id: feature.linkedSpecId,
-          competitor_insight_ids: feature.competitorInsightIds
+          competitor_insight_ids: feature.competitorInsightIds,
+          // Persona targeting fields
+          target_persona_ids: feature.targetPersonaIds,
+          persona_impact: feature.personaImpact
+            ? feature.personaImpact.map((impact) => ({
+                persona_id: impact.personaId,
+                impact_score: impact.impactScore,
+                addressed_goal_ids: impact.addressedGoalIds,
+                addressed_pain_point_ids: impact.addressedPainPointIds,
+              }))
+            : undefined,
         }));
 
         // Update metadata timestamp

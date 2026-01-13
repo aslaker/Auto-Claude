@@ -180,6 +180,16 @@ export const IPC_CHANNELS = {
   PERSONA_ERROR: 'persona:error',
   PERSONA_STOPPED: 'persona:stopped',
 
+  // Persona enrichment operations (AI-assisted creation)
+  PERSONA_ENRICH_NEW: 'persona:enrichNew',
+  PERSONA_ENRICH_EXISTING: 'persona:enrichExisting',
+  PERSONA_ADD_MANUAL: 'persona:addManual',
+
+  // Persona enrichment events (main -> renderer)
+  PERSONA_ENRICHMENT_PROGRESS: 'persona:enrichmentProgress',
+  PERSONA_ENRICHMENT_COMPLETE: 'persona:enrichmentComplete',
+  PERSONA_ENRICHMENT_ERROR: 'persona:enrichmentError',
+
   // Context operations
   CONTEXT_GET: 'context:get',
   CONTEXT_REFRESH_INDEX: 'context:refreshIndex',

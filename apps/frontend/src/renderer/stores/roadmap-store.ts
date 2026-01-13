@@ -46,17 +46,25 @@ function migrateRoadmapIfNeeded(roadmap: Roadmap): Roadmap {
   return roadmap;
 }
 
+// Options selected for the current generation
+export interface GenerationOptions {
+  competitorAnalysis: boolean;
+  personaGeneration: boolean;
+}
+
 interface RoadmapState {
   // Data
   roadmap: Roadmap | null;
   competitorAnalysis: CompetitorAnalysis | null;
   generationStatus: RoadmapGenerationStatus;
+  generationOptions: GenerationOptions | null;  // Track which options were enabled for progress UI
   currentProjectId: string | null;  // Track which project we're viewing/generating for
 
   // Actions
   setRoadmap: (roadmap: Roadmap | null) => void;
   setCompetitorAnalysis: (analysis: CompetitorAnalysis | null) => void;
   setGenerationStatus: (status: RoadmapGenerationStatus) => void;
+  setGenerationOptions: (options: GenerationOptions | null) => void;
   setCurrentProjectId: (projectId: string | null) => void;
   updateFeatureStatus: (featureId: string, status: RoadmapFeatureStatus) => void;
   markFeatureDoneBySpecId: (specId: string) => void;
@@ -80,6 +88,7 @@ export const useRoadmapStore = create<RoadmapState>((set) => ({
   roadmap: null,
   competitorAnalysis: null,
   generationStatus: initialGenerationStatus,
+  generationOptions: null,
   currentProjectId: null,
 
   // Actions
@@ -88,6 +97,8 @@ export const useRoadmapStore = create<RoadmapState>((set) => ({
   setCompetitorAnalysis: (analysis) => set({ competitorAnalysis: analysis }),
 
   setGenerationStatus: (status) => set({ generationStatus: status }),
+
+  setGenerationOptions: (options) => set({ generationOptions: options }),
 
   setCurrentProjectId: (projectId) => set({ currentProjectId: projectId }),
 
@@ -169,6 +180,7 @@ export const useRoadmapStore = create<RoadmapState>((set) => ({
       roadmap: null,
       competitorAnalysis: null,
       generationStatus: initialGenerationStatus,
+      generationOptions: null,
       currentProjectId: null
     }),
 
@@ -297,11 +309,19 @@ export async function loadRoadmap(projectId: string): Promise<void> {
 export function generateRoadmap(
   projectId: string,
   enableCompetitorAnalysis?: boolean,
-  refreshCompetitorAnalysis?: boolean
+  refreshCompetitorAnalysis?: boolean,
+  enablePersonaGeneration?: boolean,
+  refreshPersonas?: boolean
 ): void {
   // Debug logging
   if (window.DEBUG) {
-    console.log('[Roadmap] Starting generation:', { projectId, enableCompetitorAnalysis, refreshCompetitorAnalysis });
+    console.log('[Roadmap] Starting generation:', {
+      projectId,
+      enableCompetitorAnalysis,
+      refreshCompetitorAnalysis,
+      enablePersonaGeneration,
+      refreshPersonas
+    });
   }
 
   useRoadmapStore.getState().setGenerationStatus({
@@ -309,17 +329,31 @@ export function generateRoadmap(
     progress: 0,
     message: 'Starting roadmap generation...'
   });
-  window.electronAPI.generateRoadmap(projectId, enableCompetitorAnalysis, refreshCompetitorAnalysis);
+  window.electronAPI.generateRoadmap(
+    projectId,
+    enableCompetitorAnalysis,
+    refreshCompetitorAnalysis,
+    enablePersonaGeneration,
+    refreshPersonas
+  );
 }
 
 export function refreshRoadmap(
   projectId: string,
   enableCompetitorAnalysis?: boolean,
-  refreshCompetitorAnalysis?: boolean
+  refreshCompetitorAnalysis?: boolean,
+  enablePersonaGeneration?: boolean,
+  refreshPersonas?: boolean
 ): void {
   // Debug logging
   if (window.DEBUG) {
-    console.log('[Roadmap] Starting refresh:', { projectId, enableCompetitorAnalysis, refreshCompetitorAnalysis });
+    console.log('[Roadmap] Starting refresh:', {
+      projectId,
+      enableCompetitorAnalysis,
+      refreshCompetitorAnalysis,
+      enablePersonaGeneration,
+      refreshPersonas
+    });
   }
 
   useRoadmapStore.getState().setGenerationStatus({
@@ -327,7 +361,13 @@ export function refreshRoadmap(
     progress: 0,
     message: 'Refreshing roadmap...'
   });
-  window.electronAPI.refreshRoadmap(projectId, enableCompetitorAnalysis, refreshCompetitorAnalysis);
+  window.electronAPI.refreshRoadmap(
+    projectId,
+    enableCompetitorAnalysis,
+    refreshCompetitorAnalysis,
+    enablePersonaGeneration,
+    refreshPersonas
+  );
 }
 
 export async function stopRoadmap(projectId: string): Promise<boolean> {

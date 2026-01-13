@@ -129,6 +129,9 @@ export interface ReferencedFile {
   addedAt: Date;        // When the file was added as reference
 }
 
+// Import PersonaAlignment from persona types
+import type { PersonaAlignment } from './persona';
+
 // Draft state for task creation (auto-saved when dialog closes)
 export interface TaskDraft {
   projectId: string;
@@ -147,6 +150,9 @@ export interface TaskDraft {
   images: ImageAttachment[];
   referencedFiles: ReferencedFile[];
   requireReviewBeforeCoding?: boolean;
+  // Persona targeting (for persona-driven development)
+  targetPersonaIds?: string[];
+  personaAlignment?: PersonaAlignment[];
   savedAt: Date;
 }
 

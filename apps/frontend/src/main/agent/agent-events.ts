@@ -176,18 +176,34 @@ export class AgentEvents {
     let phase = currentPhase;
     let progress = currentProgress;
 
+    // Phase section headers (primary detection)
     if (log.includes('PROJECT ANALYSIS')) {
       phase = 'analyzing';
-      progress = 20;
+      progress = 15;
     } else if (log.includes('PROJECT DISCOVERY')) {
       phase = 'discovering';
-      progress = 40;
+      progress = 30;
+    } else if (log.includes('COMPETITOR ANALYSIS')) {
+      phase = 'competitors';
+      progress = 45;
+    } else if (log.includes('PERSONA GENERATION')) {
+      phase = 'personas';
+      progress = 60;
     } else if (log.includes('FEATURE GENERATION')) {
       phase = 'generating';
-      progress = 70;
+      progress = 75;
     } else if (log.includes('ROADMAP GENERATED')) {
       phase = 'complete';
       progress = 100;
+    }
+    // Skip/reuse detection - show completion and advance progress
+    else if (currentPhase === 'competitors' &&
+             (log.includes('not enabled, skipping') || log.includes('already exists'))) {
+      progress = 55; // Mark competitor phase as done
+    }
+    else if (currentPhase === 'personas' &&
+             (log.includes('not enabled, skipping') || log.includes('existing personas'))) {
+      progress = 70; // Mark persona phase as done
     }
 
     return { phase, progress };
